@@ -3,39 +3,22 @@
   "store": "ansushibar",
   "results": [
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-01",
       "openDays": 29,
       "shifts": 116,
       "targetHours": 702,
-      "plannedHours": 681.5,
+      "plannedHours": 702,
       "noOpen": 0,
       "noClose": 0,
-      "emptyHours": 0.5,
-      "belowTwoHours": 27.5,
+      "emptyHours": 0,
+      "belowTwoHours": 20.5,
       "peakMissingHours": 0,
       "peakHours": 20,
-      "kitchenMissingHours": 47,
-      "serviceMissingHours": 54,
+      "kitchenMissingHours": 44,
+      "serviceMissingHours": 55,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-2",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Nguyen Duc Khai: thiếu 11h — mới xếp được 158h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-3",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Luu Van Tam: thiếu 4,5h — mới xếp được 164,5h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 5h — mới xếp được 100h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
@@ -61,88 +44,7 @@
           "id": "ansushibar-2",
           "name": "Nguyen Duc Khai",
           "targetHours": 169,
-          "plannedHours": 158
-        },
-        {
-          "id": "ansushibar-3",
-          "name": "Luu Van Tam",
-          "targetHours": 169,
-          "plannedHours": 164.5
-        },
-        {
-          "id": "ansushibar-4",
-          "name": "Vo Ngoc Duong",
-          "targetHours": 105,
-          "plannedHours": 100
-        },
-        {
-          "id": "ansushibar-5",
-          "name": "Nguyen Vu Sa Lam",
-          "targetHours": 43,
-          "plannedHours": 43
-        },
-        {
-          "id": "ansushibar-6",
-          "name": "Nguyen Thi Hong Linh",
-          "targetHours": 43,
-          "plannedHours": 43
-        }
-      ]
-    },
-    {
-      "month": "2026-02",
-      "openDays": 28,
-      "shifts": 107,
-      "targetHours": 702,
-      "plannedHours": 693,
-      "noOpen": 0,
-      "noClose": 0,
-      "emptyHours": 0,
-      "belowTwoHours": 18.5,
-      "peakMissingHours": 0,
-      "peakHours": 16,
-      "kitchenMissingHours": 35.5,
-      "serviceMissingHours": 40.5,
-      "errors": [],
-      "warnings": [
-        {
-          "employeeId": "ansushibar-1",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Duc Thuan Nguyen: thiếu 3,5h — mới xếp được 169,5h / 173h."
-        },
-        {
-          "employeeId": "ansushibar-2",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Nguyen Duc Khai: thiếu 5,5h — mới xếp được 163,5h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-5",
-          "severity": "warning",
-          "rule": "preferred-windows",
-          "message": "Nguyen Vu Sa Lam: 6/6 ca ngoài khung giờ ưu tiên (06.02, 07.02, 08.02, 20.02, 21.02, 22.02)."
-        },
-        {
-          "employeeId": "ansushibar-6",
-          "severity": "warning",
-          "rule": "preferred-windows",
-          "message": "Nguyen Thi Hong Linh: 6/6 ca ngoài khung giờ ưu tiên (01.02, 13.02, 14.02, 15.02, 27.02, 28.02)."
-        }
-      ],
-      "independent": [],
-      "people": [
-        {
-          "id": "ansushibar-1",
-          "name": "Duc Thuan Nguyen",
-          "targetHours": 173,
-          "plannedHours": 169.5
-        },
-        {
-          "id": "ansushibar-2",
-          "name": "Nguyen Duc Khai",
-          "targetHours": 169,
-          "plannedHours": 163.5
+          "plannedHours": 169
         },
         {
           "id": "ansushibar-3",
@@ -171,27 +73,92 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
+      "month": "2026-02",
+      "openDays": 28,
+      "shifts": 107,
+      "targetHours": 702,
+      "plannedHours": 702,
+      "noOpen": 0,
+      "noClose": 0,
+      "emptyHours": 0,
+      "belowTwoHours": 18.5,
+      "peakMissingHours": 0,
+      "peakHours": 16,
+      "kitchenMissingHours": 35,
+      "serviceMissingHours": 39,
+      "errors": [],
+      "warnings": [
+        {
+          "employeeId": "ansushibar-5",
+          "severity": "warning",
+          "rule": "preferred-windows",
+          "message": "Nguyen Vu Sa Lam: 6/6 ca ngoài khung giờ ưu tiên (06.02, 07.02, 08.02, 20.02, 21.02, 22.02)."
+        },
+        {
+          "employeeId": "ansushibar-6",
+          "severity": "warning",
+          "rule": "preferred-windows",
+          "message": "Nguyen Thi Hong Linh: 6/6 ca ngoài khung giờ ưu tiên (01.02, 13.02, 14.02, 15.02, 27.02, 28.02)."
+        }
+      ],
+      "independent": [],
+      "people": [
+        {
+          "id": "ansushibar-1",
+          "name": "Duc Thuan Nguyen",
+          "targetHours": 173,
+          "plannedHours": 173
+        },
+        {
+          "id": "ansushibar-2",
+          "name": "Nguyen Duc Khai",
+          "targetHours": 169,
+          "plannedHours": 169
+        },
+        {
+          "id": "ansushibar-3",
+          "name": "Luu Van Tam",
+          "targetHours": 169,
+          "plannedHours": 169
+        },
+        {
+          "id": "ansushibar-4",
+          "name": "Vo Ngoc Duong",
+          "targetHours": 105,
+          "plannedHours": 105
+        },
+        {
+          "id": "ansushibar-5",
+          "name": "Nguyen Vu Sa Lam",
+          "targetHours": 43,
+          "plannedHours": 43
+        },
+        {
+          "id": "ansushibar-6",
+          "name": "Nguyen Thi Hong Linh",
+          "targetHours": 43,
+          "plannedHours": 43
+        }
+      ]
+    },
+    {
+      "sharedMinijobWeekends": [],
       "month": "2026-03",
       "openDays": 31,
       "shifts": 119,
       "targetHours": 702,
-      "plannedHours": 699,
+      "plannedHours": 702,
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 17,
+      "belowTwoHours": 16,
       "peakMissingHours": 0,
       "peakHours": 16,
       "kitchenMissingHours": 24,
-      "serviceMissingHours": 41.5,
+      "serviceMissingHours": 40.5,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 3h — mới xếp được 102h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
@@ -229,7 +196,7 @@
           "id": "ansushibar-4",
           "name": "Vo Ngoc Duong",
           "targetHours": 105,
-          "plannedHours": 102
+          "plannedHours": 105
         },
         {
           "id": "ansushibar-5",
@@ -246,44 +213,29 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [
+        "2026-04-06"
+      ],
       "month": "2026-04",
       "openDays": 28,
-      "shifts": 107,
+      "shifts": 109,
       "targetHours": 702,
-      "plannedHours": 681.5,
-      "noOpen": 1,
+      "plannedHours": 702,
+      "noOpen": 0,
       "noClose": 0,
-      "emptyHours": 2,
-      "belowTwoHours": 24,
+      "emptyHours": 0,
+      "belowTwoHours": 27,
       "peakMissingHours": 0,
       "peakHours": 14,
-      "kitchenMissingHours": 27,
-      "serviceMissingHours": 43.5,
+      "kitchenMissingHours": 34.5,
+      "serviceMissingHours": 36,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-2",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Nguyen Duc Khai: thiếu 11h — mới xếp được 158h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 6,5h — mới xếp được 98,5h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
           "rule": "preferred-windows",
-          "message": "Nguyen Vu Sa Lam: 5/5 ca ngoài khung giờ ưu tiên (04.04, 05.04, 17.04, 18.04, 19.04)."
-        },
-        {
-          "employeeId": "ansushibar-5",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Nguyen Vu Sa Lam: thiếu 3h — mới xếp được 40h / 43h."
+          "message": "Nguyen Vu Sa Lam: 6/6 ca ngoài khung giờ ưu tiên (04.04, 05.04, 10.04, 17.04, 18.04, 19.04)."
         },
         {
           "employeeId": "ansushibar-6",
@@ -304,7 +256,7 @@
           "id": "ansushibar-2",
           "name": "Nguyen Duc Khai",
           "targetHours": 169,
-          "plannedHours": 158
+          "plannedHours": 169
         },
         {
           "id": "ansushibar-3",
@@ -316,13 +268,13 @@
           "id": "ansushibar-4",
           "name": "Vo Ngoc Duong",
           "targetHours": 105,
-          "plannedHours": 98.5
+          "plannedHours": 105
         },
         {
           "id": "ansushibar-5",
           "name": "Nguyen Vu Sa Lam",
           "targetHours": 43,
-          "plannedHours": 40
+          "plannedHours": 43
         },
         {
           "id": "ansushibar-6",
@@ -333,27 +285,22 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-05",
       "openDays": 28,
       "shifts": 114,
       "targetHours": 702,
-      "plannedHours": 694,
+      "plannedHours": 702,
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
       "belowTwoHours": 12.5,
       "peakMissingHours": 0,
       "peakHours": 18,
-      "kitchenMissingHours": 21.5,
-      "serviceMissingHours": 34,
+      "kitchenMissingHours": 19,
+      "serviceMissingHours": 33,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-3",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Luu Van Tam: thiếu 8h — mới xếp được 161h / 169h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
@@ -385,7 +332,7 @@
           "id": "ansushibar-3",
           "name": "Luu Van Tam",
           "targetHours": 169,
-          "plannedHours": 161
+          "plannedHours": 169
         },
         {
           "id": "ansushibar-4",
@@ -408,27 +355,22 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-06",
       "openDays": 30,
       "shifts": 115,
       "targetHours": 702,
-      "plannedHours": 699,
-      "noOpen": 1,
+      "plannedHours": 702,
+      "noOpen": 0,
       "noClose": 0,
-      "emptyHours": 0.5,
-      "belowTwoHours": 15,
-      "peakMissingHours": 0,
+      "emptyHours": 0,
+      "belowTwoHours": 14.5,
+      "peakMissingHours": 0.5,
       "peakHours": 16,
       "kitchenMissingHours": 26.5,
-      "serviceMissingHours": 35.5,
+      "serviceMissingHours": 33.5,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 3h — mới xếp được 102h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
@@ -466,7 +408,7 @@
           "id": "ansushibar-4",
           "name": "Vo Ngoc Duong",
           "targetHours": 105,
-          "plannedHours": 102
+          "plannedHours": 105
         },
         {
           "id": "ansushibar-5",
@@ -483,33 +425,22 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-07",
       "openDays": 31,
       "shifts": 117,
       "targetHours": 702,
-      "plannedHours": 692.5,
+      "plannedHours": 702,
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 21.5,
-      "peakMissingHours": 2,
+      "belowTwoHours": 19.5,
+      "peakMissingHours": 0,
       "peakHours": 18,
-      "kitchenMissingHours": 36,
-      "serviceMissingHours": 52,
+      "kitchenMissingHours": 34.5,
+      "serviceMissingHours": 55,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-3",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Luu Van Tam: thiếu 6,5h — mới xếp được 162,5h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 3h — mới xếp được 102h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
@@ -541,13 +472,13 @@
           "id": "ansushibar-3",
           "name": "Luu Van Tam",
           "targetHours": 169,
-          "plannedHours": 162.5
+          "plannedHours": 169
         },
         {
           "id": "ansushibar-4",
           "name": "Vo Ngoc Duong",
           "targetHours": 105,
-          "plannedHours": 102
+          "plannedHours": 105
         },
         {
           "id": "ansushibar-5",
@@ -564,11 +495,12 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-08",
       "openDays": 31,
       "shifts": 119,
       "targetHours": 702,
-      "plannedHours": 698.5,
+      "plannedHours": 702,
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
@@ -579,12 +511,6 @@
       "serviceMissingHours": 49,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 3,5h — mới xếp được 101,5h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
@@ -622,7 +548,7 @@
           "id": "ansushibar-4",
           "name": "Vo Ngoc Duong",
           "targetHours": 105,
-          "plannedHours": 101.5
+          "plannedHours": 105
         },
         {
           "id": "ansushibar-5",
@@ -639,6 +565,7 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-09",
       "openDays": 30,
       "shifts": 116,
@@ -708,33 +635,22 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-10",
       "openDays": 29,
       "shifts": 113,
       "targetHours": 702,
-      "plannedHours": 693,
+      "plannedHours": 702,
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 17,
+      "belowTwoHours": 13,
       "peakMissingHours": 0,
       "peakHours": 16,
-      "kitchenMissingHours": 31,
-      "serviceMissingHours": 38.5,
+      "kitchenMissingHours": 28.5,
+      "serviceMissingHours": 31.5,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-2",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Nguyen Duc Khai: thiếu 6h — mới xếp được 163h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 3h — mới xếp được 102h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
@@ -760,7 +676,7 @@
           "id": "ansushibar-2",
           "name": "Nguyen Duc Khai",
           "targetHours": 169,
-          "plannedHours": 163
+          "plannedHours": 169
         },
         {
           "id": "ansushibar-3",
@@ -772,7 +688,7 @@
           "id": "ansushibar-4",
           "name": "Vo Ngoc Duong",
           "targetHours": 105,
-          "plannedHours": 102
+          "plannedHours": 105
         },
         {
           "id": "ansushibar-5",
@@ -789,6 +705,7 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [],
       "month": "2026-11",
       "openDays": 30,
       "shifts": 113,
@@ -858,50 +775,29 @@
       ]
     },
     {
+      "sharedMinijobWeekends": [
+        "2026-11-30"
+      ],
       "month": "2026-12",
       "openDays": 29,
-      "shifts": 113,
+      "shifts": 114,
       "targetHours": 702,
-      "plannedHours": 668,
-      "noOpen": 1,
+      "plannedHours": 702,
+      "noOpen": 0,
       "noClose": 0,
-      "emptyHours": 5,
+      "emptyHours": 0,
       "belowTwoHours": 19,
       "peakMissingHours": 0,
       "peakHours": 12,
-      "kitchenMissingHours": 41,
-      "serviceMissingHours": 40.5,
+      "kitchenMissingHours": 36.5,
+      "serviceMissingHours": 43,
       "errors": [],
       "warnings": [
-        {
-          "employeeId": "ansushibar-2",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Nguyen Duc Khai: thiếu 12h — mới xếp được 157h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-3",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Luu Van Tam: thiếu 8h — mới xếp được 161h / 169h."
-        },
-        {
-          "employeeId": "ansushibar-4",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Vo Ngoc Duong: thiếu 3h — mới xếp được 102h / 105h."
-        },
         {
           "employeeId": "ansushibar-5",
           "severity": "warning",
           "rule": "preferred-windows",
-          "message": "Nguyen Vu Sa Lam: 4/4 ca ngoài khung giờ ưu tiên (11.12, 12.12, 13.12, 27.12)."
-        },
-        {
-          "employeeId": "ansushibar-5",
-          "severity": "warning",
-          "rule": "contract-hours",
-          "message": "Nguyen Vu Sa Lam: thiếu 11h — mới xếp được 32h / 43h."
+          "message": "Nguyen Vu Sa Lam: 6/6 ca ngoài khung giờ ưu tiên (04.12, 05.12, 11.12, 12.12, 13.12, 27.12)."
         },
         {
           "employeeId": "ansushibar-6",
@@ -922,25 +818,25 @@
           "id": "ansushibar-2",
           "name": "Nguyen Duc Khai",
           "targetHours": 169,
-          "plannedHours": 157
+          "plannedHours": 169
         },
         {
           "id": "ansushibar-3",
           "name": "Luu Van Tam",
           "targetHours": 169,
-          "plannedHours": 161
+          "plannedHours": 169
         },
         {
           "id": "ansushibar-4",
           "name": "Vo Ngoc Duong",
           "targetHours": 105,
-          "plannedHours": 102
+          "plannedHours": 105
         },
         {
           "id": "ansushibar-5",
           "name": "Nguyen Vu Sa Lam",
           "targetHours": 43,
-          "plannedHours": 32
+          "plannedHours": 43
         },
         {
           "id": "ansushibar-6",

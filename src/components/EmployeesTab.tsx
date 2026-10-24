@@ -640,8 +640,15 @@ function EmployeeSheet({
             </label>
             <div>
               <FieldLabel>Bộ phận</FieldLabel>
-              <select className={inputClass} value={d.workRole} onChange={(e) => set("workRole", e.target.value as Draft["workRole"])}>
-              <option value="SERVICE_SUSHI">Bồi / Sushi</option><option value="KITCHEN">Bếp</option><option value="BOTH">Cả hai</option></select>
+              <Segmented<NonNullable<Employee["workRole"]>>
+                value={d.workRole}
+                onChange={(value) => set("workRole", value)}
+                options={[
+                  { value: "SERVICE_SUSHI", label: "Bồi / Sushi" },
+                  { value: "KITCHEN", label: "Bếp" },
+                  { value: "BOTH", label: "Cả hai" },
+                ]}
+              />
               <FieldLabel>Hình thức</FieldLabel>
               <Segmented<EmploymentType>
                 value={d.employmentType}

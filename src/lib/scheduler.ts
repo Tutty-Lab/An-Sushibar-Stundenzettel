@@ -11,7 +11,11 @@ import type { WeekdayKey } from "./demand";
 import { consecutiveRunLengthWith } from "./consecutive";
 import { datesOfMonth, parseIsoDate } from "./demand";
 import { weekStartOf } from "./weeks";
-import { generateWeeklySchedule } from "./weeklyScheduler";
+import { publicHolidays } from "./holidays";
+import { resolveDay } from "./workHours";
+import { mayWorkOn } from "./availability";
+import { employeeForMonth } from "./history";
+import { generateWeeklySchedule, completeContractHours } from "./weeklyScheduler";
 
 export type GenerateInput = {
   year: number;
@@ -45,7 +49,7 @@ function enforceRest(shifts: Shift[]): Shift[] {
 }
 export function generateSchedule(input: GenerateInput): Shift[] {
   const pair = input.employees.filter(e => ["ansushibar-5", "ansushibar-6"].includes(e.id)).sort((a,b) => a.id.localeCompare(b.id));
-  if (pair.length !== 2) return enforceRest(generateWeeklySchedule(input));
+  if (pair.length !== 2) return completeContractHours(input, enforceRest(generateWeeklySchedule(input)));
   const blockedDays = { ...input.blockedDays };
   for (const [index, employee] of pair.entries()) {
     const blocked = new Set(blockedDays[employee.id] ?? []);
@@ -55,7 +59,18 @@ export function generateSchedule(input: GenerateInput): Shift[] {
       const week = Math.round((Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate()) - Date.UTC(2026, 0, 5)) / (7 * 86400000));
       if (((week % 2) + 2) % 2 !== index) blocked.add(date);
     }
+    // Holiday closures can leave fewer than six weekend days for a 43-hour contract.
+    // Borrow another weekend day only when the alternating weekends cannot hold the hours.
+    const holidays = input.holidays ?? publicHolidays(input.year);
+    const eligible = datesOfMonth(input.year,input.month).filter(date => mayWorkOn(employee,date) && !resolveDay(input.workHours,date,holidays,input.overrides ?? {}).closed);
+    const target = employeeForMonth(employee,`${input.year}-${String(input.month).padStart(2,"0")}`).targetMinutes;
+    let capacity = eligible.filter(date=>!blocked.has(date)).length * 480;
+    for(const date of eligible) {
+      if(capacity>=target) break;
+      if(blocked.has(date) && !input.blockedDays?.[employee.id]?.includes(date)) { blocked.delete(date); capacity+=480; }
+    }
     blockedDays[employee.id] = [...blocked];
   }
-  return enforceRest(generateWeeklySchedule({ ...input, blockedDays }));
+  const configured = { ...input, blockedDays };
+  return completeContractHours(configured, enforceRest(generateWeeklySchedule(configured)));
 }

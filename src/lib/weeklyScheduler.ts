@@ -1039,3 +1039,52 @@ export function generateWeeklySchedule(input: WeeklyInput, existing: Shift[] = [
   return improveCoverage(result, employees, days, holidays, dailyTargets, ctx)
     .sort((a, b) => a.date.localeCompare(b.date) || a.startMinutes - b.startMinutes || a.employeeId.localeCompare(b.employeeId));
 }
+
+/** Restore feasible contract hours after rest-day repair, without creating invalid days. */
+export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shift[] {
+ const employees = input.employees.map(e => employeeForMonth(e, `${input.year}-${String(input.month).padStart(2,"0")}`)).filter(e=>!e.isOwner);
+ const holidays = input.holidays ?? publicHolidays(input.year);
+ const days = new Map(datesOfMonth(input.year,input.month).map(date=>[date,resolveDay(input.workHours,date,holidays,input.overrides ?? {})]));
+ const openDates = [...days].filter(([,d])=>!d.closed).map(([date])=>date);
+ const ctx: Ctx = { rules: input.rules ?? STAFFING_RULES, weights: input.weights ?? DAY_WEIGHTS,
+ blocked: new Map(Object.entries(input.blockedDays ?? {}).map(([id,dates])=>[id,new Set(dates)])),
+ tag: input.storeTag ?? "default", windows: new Map(employees.map(e=>[e.id,preferredWindowsOf(e)])) };
+ const targets = new Map(employees.map(e=>[e.id,Math.floor(monthlyTargetMinutesFor(e,openDates,input.workHours)/SLOT)*SLOT]));
+ const bounds = {first:days.keys().next().value!,last:[...days.keys()].pop()!};
+ const caps = new Map(employees.filter(e=>e.weeklyHours!=null).map(e=>[e.id,weeklyBudgetMinutes(e,openDates,bounds,input.workHours)]));
+ const dailyTargets = new Map(openDates.map(date=>[date,initial.filter(s=>s.date===date).reduce((n,s)=>n+s.paidMinutes,0)/60]));
+ let result = initial;
+ for (const employee of employees) {
+  for (let pass=0;pass<40;pass++) {
+   result = topUpShortfalls(result,[employee],days,holidays,dailyTargets,targets,caps,new Map(),ctx);
+   const own=result.filter(s=>s.employeeId===employee.id);
+   const remaining=(targets.get(employee.id) ?? 0)-own.reduce((n,s)=>n+s.paidMinutes,0);
+   if(remaining<SLOT || employee.fixedShift) break;
+   const worked=new Set(own.map(s=>s.date));
+   let best: {shifts:Shift[];cost:number} | undefined;
+   for(const date of openDates) {
+    if(worked.has(date) || !mayWorkOn(employee,date) || ctx.blocked.get(employee.id)?.has(date)) continue;
+    if(consecutiveRunLengthWith(worked,date)>6) continue;
+    const week=weekStartOf(date);
+    const inWeek=own.filter(s=>weekStartOf(s.date)===week);
+    if(new Set(inWeek.map(s=>s.date)).size>=dayLimit(employee)) continue;
+    const cap=caps.get(employee.id)?.get(week) ?? Infinity;
+    const room=Math.min(MAX_PAID,remaining,cap-inWeek.reduce((n,s)=>n+s.paidMinutes,0));
+    const day=days.get(date)!;
+    const others=result.filter(s=>s.date===date);
+    const weekday=effectiveWeekdayKey(date,holidays);
+    for(let paid=Math.floor(room/SLOT)*SLOT;paid>=MIN_SHIFT;paid-=SLOT) {
+     const options=optionsFor(employee,date,paid,day.blocks,true,weekday,ctx);
+     for(const option of options) {
+      const cost=dayCost([...others,...option.shifts],day.blocks,weekday,dailyTargets.get(date),ctx)-dayCost(others,day.blocks,weekday,dailyTargets.get(date),ctx)-paid*100000;
+      if(!best || cost<best.cost) best={shifts:option.shifts,cost};
+     }
+     if(options.length) break;
+    }
+   }
+   if(!best) break;
+   result=[...result,...best.shifts];
+  }
+ }
+ return improveCoverage(result,employees,days,holidays,dailyTargets,ctx).sort((a,b)=>a.date.localeCompare(b.date)||a.startMinutes-b.startMinutes||a.employeeId.localeCompare(b.employeeId));
+}

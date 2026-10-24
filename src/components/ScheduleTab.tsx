@@ -21,7 +21,7 @@ import { employmentShortVi } from "../lib/employment";
 import { monthlyTargetMinutesFor, SCHEDULE_SLOT_MINUTES } from "../lib/contract";
 import { StaffingReport } from "./StaffingReport";
 import type { PeakCoverage } from "../lib/analyze";
-import { ruleById, staffingRuleId } from "../lib/rules";
+
 
 /** „17", „11½" (halbe Stunde), sonst „11:15" – so bleibt die Zelle schmal. */
 function shortTime(minutes: number): string {
@@ -148,7 +148,7 @@ export function ScheduleTab({
     }
     return map;
   }, [store.analysis]);
-  const staffingRows = store.storeConfig.staffingRules;
+
 
   // Debug: ai mở cửa / đóng cửa, và số người ÍT NHẤT có mặt trong từng khung
   // (trừ giờ nghỉ) – để chủ đánh giá lịch nhanh theo từng ngày.
@@ -182,13 +182,11 @@ export function ScheduleTab({
     return result;
   }, [dates, schedule]);
 
-  const [department, setDepartment] = useState("ALL");
-  const visibleEmployees = store.activeEmployees.filter((e) => department === "ALL" || e.workRole === department || e.workRole === "BOTH");
   const hasEmployees = store.activeEmployees.length > 0;
 
   return (
     <section>
-      {mode === "schedule" && <div className="no-print flex gap-2 mb-3">{[["ALL", "Tất cả"], ["SERVICE_SUSHI", "Bồi"], ["KITCHEN", "Bếp"]].map(([value, label]) => <button key={value} onClick={() => setDepartment(value)} className={`rounded border px-4 py-2 ${department === value ? "bg-slate-900 text-white" : "bg-white"}`}>{label}</button>)}</div>}
+
       {/* Alles Sichtbare liegt im no-print-Block; beim Drucken bleibt nur der
           Druckbereich ganz unten übrig. */}
       <div className="no-print">
@@ -338,7 +336,7 @@ export function ScheduleTab({
               </tr>
             </thead>
             <tbody>
-              {visibleEmployees.map((emp) => {
+              {store.activeEmployees.map((emp) => {
                 const sum = summaryByEmp.get(emp.id);
                 const sollMin = monthlyTargetMinutesFor(emp, openDates, schedule.workHours);
                 const diff = sum?.diffMinutes ?? -sollMin;
@@ -418,16 +416,6 @@ export function ScheduleTab({
               />
               <SummaryRow label="Ca sáng" dates={gridDates} value={(d) => String(dayStats.get(d)!.early)} />
               <SummaryRow label="Ca chiều" dates={gridDates} value={(d) => String(dayStats.get(d)!.late)} />
-              {schedule.shifts.length > 0 && staffingRows.map((rule) => (
-                <CoverageRow
-                  key={rule.label}
-                  label={rule.label}
-                  when={rule.when}
-                  hard={ruleById(staffingRuleId(rule.label)).kind === "hard"}
-                  dates={gridDates}
-                  peaks={(d) => peaksByDay.get(d)?.byLabel.get(rule.label)}
-                />
-              ))}
               {schedule.shifts.length > 0 && (
                 <>
                   <SummaryRow label="Mở 09:00" dates={gridDates} value={(d) => debugStats.get(d)?.open ?? "–"} />
@@ -517,72 +505,6 @@ function SummaryRow({
           {value(d)}
         </td>
       ))}
-      <td className="border-t border-l border-slate-200" />
-      <td className="border-t border-l border-slate-200" />
-    </tr>
-  );
-}
-
-/**
- * Eine Besetzungsregel als Zeile: wie viele Leute in der Spanne da sind, als
- * „vắng–đông" (kleinste–größte Zahl; bei „Trong giờ mở cửa" über beide Blöcke).
- * Nur die kleinste Zahl zu zeigen las sich wie „abends weniger Leute", obwohl
- * nur die letzte Stunde dünner war. Zu wenig → roter Rahmen „cần N",
- * zu viele → gelber Rahmen „tối đa N". Gleiche Zahlen wie in der Prüfung.
- */
-function CoverageRow({
-  label,
-  when,
-  hard,
-  dates,
-  peaks,
-}: {
-  label: string;
-  when: string;
-  hard: boolean;
-  dates: string[];
-  peaks: (d: string) => PeakCoverage[] | undefined;
-}) {
-  return (
-    <tr className="bg-slate-50 text-slate-600">
-      <td
-        className="sticky left-0 z-10 bg-slate-50 border-t border-r border-slate-200 px-1.5 py-1 font-medium w-[80px] max-w-[80px] text-[10px] leading-tight"
-        title={`${hard ? "Luật cứng" : "Luật mềm"}: ${label} ${when}`}
-      >
-        {label} <span className="text-[11px] font-normal text-slate-400">{when} · người (vắng–đông)</span>
-        <span
-          className={`ml-1 rounded px-1 text-[10px] font-medium ${hard ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-800"}`}
-        >
-          {hard ? "cứng" : "mềm"}
-        </span>
-      </td>
-      {dates.map((d) => {
-        const list = peaks(d);
-        if (!list || list.length === 0) {
-          return (
-            <td key={d} className="border-t border-l border-slate-200 px-1 py-1 text-center text-slate-300">
-              –
-            </td>
-          );
-        }
-        const min = Math.min(...list.map((p) => p.minStaff));
-        const max = Math.max(...list.map((p) => p.maxStaff));
-        const need = Math.max(...list.map((p) => p.required));
-        const allowed = Math.min(...list.map((p) => p.allowed));
-        const short = list.some((p) => p.minStaff < p.required);
-        return (
-          <td
-            key={d}
-            className={`border-t border-l border-slate-200 px-1 py-1 text-center ${
-              short ? "bg-rose-50 font-semibold text-rose-700 outline outline-2 -outline-offset-2 outline-rose-500" : ""
-            }`}
-            title={`ít nhất ${min}, đông nhất ${max} · luật: ${need}${Number.isFinite(allowed) ? `–${allowed}` : "+"} người`}
-          >
-            {min === max ? min : `${min}–${max}`}
-            {short && <span className="block text-[10px] leading-none">cần {need}</span>}
-          </td>
-        );
-      })}
       <td className="border-t border-l border-slate-200" />
       <td className="border-t border-l border-slate-200" />
     </tr>

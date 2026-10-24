@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { STORES, initialScheduleFor } from "../stores";
 import { publicHolidayNames } from "../holidays";
+import { validateSchedule } from "../validation";
+import { datesOfMonth } from "../demand";
+import { publicHolidays } from "../holidays";
+import { resolveDay } from "../workHours";
 import { generateSchedule } from "../scheduler";
 describe("An Sushibar", () => {
  it("uses new store and six contracts", () => {
@@ -23,4 +27,16 @@ describe("An Sushibar", () => {
  for (const e of employees) expect(shifts.filter(s=>s.employeeId===e.id).reduce((sum,s)=>sum+s.paidMinutes,0)).toBeLessThanOrEqual(e.targetMinutes);
  for (const s of shifts) { expect(s.date).not.toBe("2026-10-03"); expect(s.date).not.toBe("2026-10-31"); expect(s.startMinutes).toBeGreaterThanOrEqual(630); expect(s.endMinutes).toBeLessThanOrEqual(1260); if (["ansushibar-5","ansushibar-6"].includes(s.employeeId)) expect([0,5,6]).toContain(new Date(s.date+"T12:00:00").getDay()); }
  });
+});
+
+describe("An Sushibar contract completion", () => {
+ for(let month=1;month<=12;month++) it(`fills feasible monthly hours in 2026-${month}`,()=>{
+  const store=STORES[0]; const employees=store.sampleEmployees();
+  if(month===10) employees[0].targetMinutes+=18; // 702.3 h, including an unschedulable 18-minute remainder.
+  const shifts=generateSchedule({year:2026,month,workHours:store.workHours,employees,rules:store.staffingRules,weights:store.dayWeights});
+  expect(shifts.reduce((n,s)=>n+s.paidMinutes,0)).toBe(702*60);
+  for(const employee of employees) expect(shifts.filter(s=>s.employeeId===employee.id).reduce((n,s)=>n+s.paidMinutes,0)).toBe(Math.floor(employee.targetMinutes/30)*30);
+  const open=datesOfMonth(2026,month).filter(date=>!resolveDay(store.workHours,date,publicHolidays(2026),{}).closed);
+  expect(validateSchedule(employees,shifts,2026,open,store.workHours).errors.filter(e=>e.severity!=="warning")).toEqual([]);
+ },20000);
 });

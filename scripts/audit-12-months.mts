@@ -41,7 +41,7 @@ for (let month = 1; month <= 12; month++) {
   }
  }
  const minijobWeeks = employees.filter(e=>e.employmentType==="MINIJOB").map(e=>new Set(shifts.filter(s=>s.employeeId===e.id).map(s=>weekStartOf(s.date))));
- if([...minijobWeeks[0]].some(w=>minijobWeeks[1].has(w))) independent.push("Minijob weekend overlap");
+ const sharedMinijobWeekends = [...minijobWeeks[0]].filter(w=>minijobWeeks[1].has(w));
  let noOpen=0,noClose=0,emptyMinutes=0,belowTwoMinutes=0,peakMissingMinutes=0,peakMinutes=0,kitchenMissingMinutes=0,serviceMissingMinutes=0;
  for(const d of open) {
   const day=resolveDay(store.workHours,d,holidays,{}); const ds=shifts.filter(s=>s.date===d);
@@ -63,7 +63,7 @@ for (let month = 1; month <= 12; month++) {
   }
  }
  const people=employees.map(e=>({id:e.id,name:e.name,targetHours:e.targetMinutes/60,plannedHours:shifts.filter(s=>s.employeeId===e.id).reduce((n,s)=>n+s.paidMinutes,0)/60}));
- const row={month:`${year}-${String(month).padStart(2,"0")}`,openDays:open.length,shifts:shifts.length,targetHours:people.reduce((n,e)=>n+e.targetHours,0),plannedHours:people.reduce((n,e)=>n+e.plannedHours,0),noOpen,noClose,emptyHours:emptyMinutes/60,belowTwoHours:belowTwoMinutes/60,peakMissingHours:peakMissingMinutes/60,peakHours:peakMinutes/60,kitchenMissingHours:kitchenMissingMinutes/60,serviceMissingHours:serviceMissingMinutes/60,errors:validation.errors.filter(e=>e.severity!=="warning"),warnings:validation.errors.filter(e=>e.severity==="warning"),independent,people};
+ const row={sharedMinijobWeekends,month:`${year}-${String(month).padStart(2,"0")}`,openDays:open.length,shifts:shifts.length,targetHours:people.reduce((n,e)=>n+e.targetHours,0),plannedHours:people.reduce((n,e)=>n+e.plannedHours,0),noOpen,noClose,emptyHours:emptyMinutes/60,belowTwoHours:belowTwoMinutes/60,peakMissingHours:peakMissingMinutes/60,peakHours:peakMinutes/60,kitchenMissingHours:kitchenMissingMinutes/60,serviceMissingHours:serviceMissingMinutes/60,errors:validation.errors.filter(e=>e.severity!=="warning"),warnings:validation.errors.filter(e=>e.severity==="warning"),independent,people};
  results.push(row); console.log(JSON.stringify(row));
 }
 const boundaryRuns=employees.map(e=>({name:e.name,maxDays:maxConsecutiveRun(all.filter(s=>s.employeeId===e.id).map(s=>s.date))}));
