@@ -50,10 +50,10 @@ export const wholeDay = (blocks: DayBlocks): DayWindow[] =>
 /** Ngày đông khách: thứ Sáu và thứ Bảy. */
 export const BUSY_DAYS: readonly WeekdayKey[] = ["friday", "saturday"];
 
-/** Mức phủ vận hành: bếp + bồi; thêm người T6–T7 trong cao điểm tối. */
+/** Mức phủ vận hành: bếp + bồi; thêm người mỗi ngày trong cao điểm tối. */
 export const ANSUSHIBAR_STAFFING_RULES: readonly StaffingRule[] = [
  { label: "Trong giờ mở cửa", when: "10:30–21:00", minStaff: 2, maxStaff: Infinity, scaled: false, windows: wholeDay },
- { label: "Cao điểm tối T6, T7", when: "17:30–19:30", minStaff: 3, maxStaff: 6, scaled: false, weekdays: ["friday", "saturday"], windows: clip(1050, 1170) },
+ { label: "Cao điểm tối cả tuần", when: "17:30–19:30", minStaff: 3, maxStaff: 6, scaled: false, weekdays: RESTAURANT_POLICY.peak.weekdays, windows: clip(PEAK_START, PEAK_END) },
 ];
 
 /** Rückfall für Tests und Altaufrufe. */
@@ -88,7 +88,7 @@ export function staffingWindows(
  * được thoả: với từng 30 phút mở cửa, lấy mức cao nhất trong các khung phủ lên
  * nó, rồi cộng lại.
  *
- * An Sushibar: 2 người suốt giờ mở cửa, thêm người trong cao điểm T6/T7.
+ * An Sushibar: 2 người suốt giờ mở cửa, thêm người trong cao điểm mỗi ngày.
  */
 export function minimumStaffHours(
   blocks: DayBlocks,
@@ -111,7 +111,7 @@ export function minimumStaffHours(
 }
 
 // ── Đường nhu cầu trong ngày ────────────────────────────────────────────────
-/** Nhu cầu riêng An Sushibar; cao điểm tối thứ Sáu và thứ Bảy. */
+/** Nhu cầu riêng An Sushibar; cao điểm tối mỗi ngày. */
 export type DemandBand = { startMinutes: number; endMinutes: number; level: number; label: string };
 
 const band = (from: string, to: string, level: number, label: string): DemandBand => {
@@ -120,13 +120,13 @@ const band = (from: string, to: string, level: number, label: string): DemandBan
 };
 
 const restaurantDemand = [band("10:30", "17:30", 1, "Ban ngày"), band("17:30", "19:30", 2.5, "Cao điểm tối"), band("19:30", "21:00", 1, "Cuối ngày")];
-export const DEMAND_PROFILE = { normal: [band("10:30", "21:00", 1, "Ngày thường")], saturday: restaurantDemand };
+export const DEMAND_PROFILE = { normal: restaurantDemand, saturday: restaurantDemand };
 
 export function demandProfileOf(
   weekday: WeekdayKey,
   _weights: Record<WeekdayKey, number> = DAY_WEIGHTS,
 ): readonly DemandBand[] {
-  // Friday and Saturday share the restaurant evening peak.
+  // Evening peak applies every open day.
   return BUSY_DAYS.includes(weekday) ? DEMAND_PROFILE.saturday : DEMAND_PROFILE.normal;
 }
 

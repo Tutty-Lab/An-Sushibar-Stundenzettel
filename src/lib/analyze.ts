@@ -1,3 +1,4 @@
+import { coverageSummary, type CoverageGap } from "./coverage";
 // ============================================================================
 // Auswertung eines fertigen Dienstplans. Rein lesend – verändert nichts.
 //
@@ -27,6 +28,7 @@ import { weekStartOf } from "./weeks";
 import { mayWorkOn } from "./availability";
 
 export type PeakCoverage = {
+  gaps?: CoverageGap[];
   label: string;
   /** Kleinste Besetzung über die ganze Spanne. */
   minStaff: number;
@@ -144,6 +146,7 @@ export function analyzeSchedule(input: AnalyzeInput): ScheduleAnalysis {
         const minStaff = counts.length ? Math.min(...counts) : 0;
         const maxStaff = counts.length ? Math.max(...counts) : 0;
         peaks.push({
+          gaps: coverageSummary(available, from, to, peak.minStaff).gaps,
           label: peak.label,
           minStaff,
           maxStaff,
@@ -168,7 +171,7 @@ export function analyzeSchedule(input: AnalyzeInput): ScheduleAnalysis {
           return workingAt(shift,minute) && (assigned===role || assigned==="BOTH");
         }).map(shift=>shift.employeeId)).size);
         const minimum=counts.length?Math.min(...counts):0;
-        peaks.push({label:role==="KITCHEN"?"Bếp trong giờ mở cửa":"Bồi trong giờ mở cửa",minStaff:minimum,maxStaff:counts.length?Math.max(...counts):0,required:1,allowed:Infinity,ok:minimum>=1,startMinutes:block.startMinutes,endMinutes:block.endMinutes});
+        peaks.push({gaps:coverageSummary(available.filter(s=>{ const assigned=employeesById.get(s.employeeId)?.workRole; return assigned===role || assigned==="BOTH"; }),block.startMinutes,block.endMinutes,1).gaps,label:role==="KITCHEN"?"Bếp trong giờ mở cửa":"Bồi trong giờ mở cửa",minStaff:minimum,maxStaff:counts.length?Math.max(...counts):0,required:1,allowed:Infinity,ok:minimum>=1,startMinutes:block.startMinutes,endMinutes:block.endMinutes});
       }
     }
 

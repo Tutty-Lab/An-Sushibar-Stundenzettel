@@ -58,8 +58,7 @@ for (let month = 1; month <= 12; month++) {
    const b=active.filter(s=>role(s)==="BOTH").length;
    if(k===0 && b===0) kitchenMissingMinutes++;
    if(v===0 && b===0) serviceMissingMinutes++;
-   const weekday=new Date(d+"T12:00:00").getDay();
-   if([5,6].includes(weekday) && minute>=1050 && minute<1170) { peakMinutes++; if(active.length<3) peakMissingMinutes++; }
+   if(minute>=1050 && minute<1170) { peakMinutes++; if(active.length<3) peakMissingMinutes++; }
   }
  }
  const people=employees.map(e=>({id:e.id,name:e.name,targetHours:e.targetMinutes/60,plannedHours:shifts.filter(s=>s.employeeId===e.id).reduce((n,s)=>n+s.paidMinutes,0)/60}));

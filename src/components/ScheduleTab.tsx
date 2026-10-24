@@ -1,3 +1,4 @@
+import { coverageSummary, type CoverageGap } from "../lib/coverage";
 import { isOnVacation } from "../lib/availability";
 import { useMemo, useState } from "react";
 import type { UseScheduleReturn } from "../hooks/useSchedule";
@@ -11,7 +12,6 @@ import {
 import { minutesToShortHours, minutesToTime } from "../lib/time";
 import { signedHours } from "../lib/dateFormat";
 import { isDayClosed, resolveDay } from "../lib/workHours";
-import { workingAt } from "../lib/staffing";
 import { publicHolidays } from "../lib/holidays";
 import { ShiftCellEditor } from "./ShiftCellEditor";
 import { ScheduleDayView } from "./ScheduleDayView";
@@ -156,12 +156,12 @@ export function ScheduleTab({
     const holidays = publicHolidays(schedule.year);
     const ovMap = Object.fromEntries(schedule.dateOverrides.map((o) => [o.date, o]));
     const nameOf = new Map(schedule.employees.map((e) => [e.id, e.name.trim().split(/\s+/).pop() ?? e.name]));
-    const result = new Map<string, { open: string; close: string; windows: Map<string, number | null> }>();
+    const result = new Map<string, { open: string; close: string; windows: Map<string, ReturnType<typeof coverageSummary>> }>();
     for (const d of dates) {
       const day = resolveDay(schedule.workHours, d, holidays, ovMap);
       const dayShifts = schedule.shifts.filter((s) => s.date === d);
-      const windows = new Map<string, number | null>();
-      if (day.closed || dayShifts.length === 0) {
+      const windows = new Map<string, ReturnType<typeof coverageSummary>>();
+      if (day.closed) {
         result.set(d, { open: "–", close: "–", windows });
         continue;
       }
@@ -170,16 +170,12 @@ export function ScheduleTab({
       const openers = dayShifts.filter((s) => s.startMinutes <= from).map((s) => nameOf.get(s.employeeId));
       const closers = dayShifts.filter((s) => s.endMinutes >= to).map((s) => nameOf.get(s.employeeId));
       for (const w of DEBUG_WINDOWS) {
-        let min: number | null = null;
-        for (let t = Math.max(w.from, from); t + 30 <= Math.min(w.to, to); t += 30) {
-          const count = dayShifts.filter((s) => {
-            if (!workingAt(s, t)) return false;
-            const role = schedule.employees.find((e) => e.id === s.employeeId)?.workRole;
-            return !("group" in w) || role === w.group || role === "BOTH";
-          }).length;
-          min = min == null ? count : Math.min(min, count);
-        }
-        windows.set(w.key, min);
+        const eligible = dayShifts.filter(s => {
+          const role = schedule.employees.find(e => e.id === s.employeeId)?.workRole;
+          return !("group" in w) || role === w.group || role === "BOTH";
+        });
+        const required = "group" in w ? 1 : w.key === "peak" ? 3 : 2;
+        windows.set(w.key, coverageSummary(eligible, Math.max(w.from, from), Math.min(w.to, to), required));
       }
       result.set(d, { open: openers.join(", ") || "✗", close: closers.join(", ") || "✗", windows });
     }
@@ -430,7 +426,8 @@ export function ScheduleTab({
                       label={w.label}
                       title={`Số người ít nhất có mặt ${w.label} (đã trừ giờ nghỉ)`}
                       dates={gridDates}
-                      value={(d) => debugStats.get(d)?.windows.get(w.key) ?? null}
+                      gaps={(d) => debugStats.get(d)?.windows.get(w.key)?.gaps ?? []}
+                      value={(d) => debugStats.get(d)?.windows.get(w.key)?.minimum ?? null}
                     />
                   ))}
                 </>
@@ -454,7 +451,7 @@ export function ScheduleTab({
   );
 }
 
-/** Khung kiểm tra cho dòng debug (khớp khung khách đông 09–12, 14–17). */
+/** Các khung kiểm tra của nhà hàng, gồm cao điểm mỗi ngày. */
 const DEBUG_WINDOWS = [
   { key: "all", label: "Ít nhất cả ngày", from: 630, to: 1260 },
   { key: "am", label: "Ít nhất 10:30–12", from: 630, to: 720 },
@@ -469,11 +466,12 @@ const DEBUG_WINDOWS = [
 ] as const;
 
 /** Số người ít nhất: 0 = đỏ (tiệm trống), 1 = vàng. */
-function MinPeopleRow({ label, title, dates, value }: {
+function MinPeopleRow({ label, title, dates, value, gaps }: {
   label: string;
   title: string;
   dates: string[];
   value: (d: string) => number | null;
+  gaps: (d: string) => CoverageGap[];
 }) {
   return (
     <tr className="bg-slate-50 text-slate-600">
@@ -483,8 +481,15 @@ function MinPeopleRow({ label, title, dates, value }: {
       </td>
       {dates.map((d) => {
         const n = value(d);
-        const tone = n == null ? "text-slate-300" : n === 0 ? "bg-rose-50 text-rose-700 font-semibold" : n === 1 ? "bg-amber-50 text-amber-800" : "";
-        return <td key={d} className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>{n ?? "–"}</td>;
+        const missing = gaps(d);
+        const tone = n == null ? "text-slate-300" : missing.length ? n === 0 ? "bg-rose-50 text-rose-700 font-semibold" : "bg-amber-50 text-amber-800" : "";
+        return <td key={d} className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>
+          <div>{n ?? "–"}</div>
+          {missing.length > 0 && <div className="text-[10px] font-medium">{d.slice(8)}/{d.slice(5,7)}</div>}
+          {missing.map(gap => <div key={gap.startMinutes} className="mt-0.5 text-[10px] leading-tight text-rose-700 whitespace-nowrap">
+            {minutesToTime(gap.startMinutes)}–{minutesToTime(gap.endMinutes)}<br />còn {gap.count} người
+          </div>)}
+        </td>;
       })}
       <td className="border-t border-l border-slate-200" />
       <td className="border-t border-l border-slate-200" />

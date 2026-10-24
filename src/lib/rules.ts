@@ -44,7 +44,7 @@ export const RULES: readonly Rule[] = [
   { id: "fixed-shift", kind: "hard", title: "Ca cố định", detail: "Người có ca cố định chỉ làm đúng khung giờ đó." },
   { id: "holiday-duty", kind: "hard", title: "Trực ngày lễ", detail: "Ngày lễ tiệm mở thì người trực ngày lễ phải có ca." },
   { id: "contract-hours", kind: "soft", title: "Đủ giờ định mức", detail: "Xếp đủ giờ hợp đồng; tháng không đủ ngày (nghỉ, giới hạn ngày) thì báo thiếu." },
-  { id: "peak-staff", kind: "soft", title: "Số người giờ cao điểm", detail: "Cao điểm T6–T7 17:30–19:30: ưu tiên tăng người." },
+  { id: "peak-staff", kind: "soft", title: "Số người giờ cao điểm", detail: "Cao điểm cả tuần 17:30–19:30: ưu tiên tăng người." },
   { id: "day-weights", kind: "soft", title: "Ngày đông nhiều giờ hơn", detail: "Thứ Sáu và Thứ Bảy (hệ số 1,5) nhận nhiều giờ hơn ngày thường." },
   { id: "own-shift-length", kind: "soft", title: "Độ dài ca riêng", detail: "Mỗi ngày làm nằm trong khoảng giờ đã đặt cho người đó." },
   { id: "spread-evenly", kind: "soft", title: "Rải đều trong tháng", detail: "Cân giờ các ngày cùng loại trong tháng sau khi ưu tiên phủ bếp/bồi và cao điểm." },

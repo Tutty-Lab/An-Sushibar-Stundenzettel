@@ -289,8 +289,8 @@ function dayCost(shifts: Shift[], blocks: DayBlocks, weekday: WeekdayKey, target
     return staff;
   });
   // An Sushibar: kitchen and service must be staffed separately. Flexible staff
-  // can fill either role, never both at the same time. Friday/Saturday need an
-  // extra person only during 17:30–19:30, not throughout the day.
+  // can fill either role, never both at the same time. Every open day needs an
+  // extra person during 17:30–19:30.
   let cost = model.minutes.reduce((sum, minute) => sum + restaurantRoleShortage(shifts,minute,ctx) * SLOT * RESTAURANT_POLICY.missingRoleMinuteCost, 0);
   const mussBesetzt = new Set<number>();
   for (const window of model.windows) {

@@ -1,8 +1,8 @@
 /** Chính sách riêng An Sushibar. Không dùng lịch hẹn hay quy tắc tiệm nail. */
 export const RESTAURANT_POLICY = {
  opening: { startMinutes: 630, endMinutes: 1260 },
- peak: { startMinutes: 1050, endMinutes: 1170, weekdays: ["friday", "saturday"] as const },
- // Mức phủ vận hành đang dùng: 1 bếp + 1 bồi; cao điểm T6–T7 thêm 1 người.
+ peak: { startMinutes: 1050, endMinutes: 1170, weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const },
+ // Mức phủ vận hành đang dùng: 1 bếp + 1 bồi; cao điểm mỗi ngày thêm 1 người.
  minimumKitchen: 1,
  minimumService: 1,
  peakStaff: 3,

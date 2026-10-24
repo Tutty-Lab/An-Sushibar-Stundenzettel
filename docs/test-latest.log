@@ -5,49 +5,50 @@
 
  RUN  v2.1.9 D:/Studenzettell/An-Sushibar
 
- ✓ src/lib/__tests__/inAppBrowser.test.ts (5 tests) 14ms
+ ✓ src/lib/__tests__/inAppBrowser.test.ts (5 tests) 9ms
  ✓ src/lib/__tests__/years.test.ts (3 tests) 8ms
- ✓ src/lib/__tests__/time.test.ts (8 tests) 45ms
- ✓ src/lib/__tests__/splitTargetHours.test.ts (6 tests) 209ms
- ✓ src/lib/__tests__/restaurantPolicy.test.ts (4 tests) 15ms
- ✓ src/lib/__tests__/monthArchive.test.ts (5 tests) 35ms
- ✓ src/lib/__tests__/pdf.test.ts (14 tests) 261ms
- ✓ src/lib/__tests__/overrides.test.ts (2 tests) 27009ms
-   ✓ Ausnahmen je Datum (Overrides) > plant an geschlossenen Tagen keine Schicht – Soll bleibt im 30-Minuten-Raster 14958ms
-   ✓ Ausnahmen je Datum (Overrides) > halber Tag: Mitarbeiter arbeiten KÜRZERE Schichten (nicht frei), Soll im 30-Minuten-Raster 12049ms
- ✓ src/lib/__tests__/stress.test.ts (19 tests) 35975ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 1/2026 giữ đủ mọi quy tắc cứng 3273ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 2/2026 giữ đủ mọi quy tắc cứng 1912ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 3/2026 giữ đủ mọi quy tắc cứng 2132ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 4/2026 giữ đủ mọi quy tắc cứng 2942ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 5/2026 giữ đủ mọi quy tắc cứng 3151ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 6/2026 giữ đủ mọi quy tắc cứng 2853ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 7/2026 giữ đủ mọi quy tắc cứng 3474ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 8/2026 giữ đủ mọi quy tắc cứng 2550ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 9/2026 giữ đủ mọi quy tắc cứng 3270ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 10/2026 giữ đủ mọi quy tắc cứng 2816ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 11/2026 giữ đủ mọi quy tắc cứng 1750ms
-   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 12/2026 giữ đủ mọi quy tắc cứng 2078ms
-   ✓ Scheduler: hợp đồng tuần cao hơn sức chứa > 2 người 60h/tuần / tháng 4 362ms
-   ✓ Scheduler: hợp đồng tuần cao hơn sức chứa > 2 người 60h/tuần / tháng 4 – Fehlbetrag wird als Warnung gemeldet 363ms
-   ✓ Scheduler: có ngày đóng cửa > không xếp ca vào ngày đóng cửa và giữ quy tắc cứng 2711ms
- ✓ src/lib/__tests__/ansushibar.test.ts (15 tests) 156711ms
-   ✓ An Sushibar > keeps minijobs on weekends, holidays closed, contracts capped 13753ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-1 15089ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-2 9187ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-3 22113ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-4 14954ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-5 8819ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-6 7178ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-7 16348ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-8 10303ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-9 10384ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-10 8416ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-11 6162ms
-   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-12 13990ms
+ ✓ src/lib/__tests__/time.test.ts (8 tests) 41ms
+ ✓ src/lib/__tests__/splitTargetHours.test.ts (6 tests) 264ms
+ ✓ src/lib/__tests__/coverage.test.ts (4 tests) 25ms
+ ✓ src/lib/__tests__/monthArchive.test.ts (5 tests) 37ms
+ ✓ src/lib/__tests__/restaurantPolicy.test.ts (4 tests) 18ms
+ ✓ src/lib/__tests__/pdf.test.ts (14 tests) 389ms
+ ✓ src/lib/__tests__/overrides.test.ts (2 tests) 39552ms
+   ✓ Ausnahmen je Datum (Overrides) > plant an geschlossenen Tagen keine Schicht – Soll bleibt im 30-Minuten-Raster 19560ms
+   ✓ Ausnahmen je Datum (Overrides) > halber Tag: Mitarbeiter arbeiten KÜRZERE Schichten (nicht frei), Soll im 30-Minuten-Raster 19990ms
+ ✓ src/lib/__tests__/stress.test.ts (19 tests) 54560ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 1/2026 giữ đủ mọi quy tắc cứng 4546ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 2/2026 giữ đủ mọi quy tắc cứng 4404ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 3/2026 giữ đủ mọi quy tắc cứng 4513ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 4/2026 giữ đủ mọi quy tắc cứng 3766ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 5/2026 giữ đủ mọi quy tắc cứng 4458ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 6/2026 giữ đủ mọi quy tắc cứng 4847ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 7/2026 giữ đủ mọi quy tắc cứng 4667ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 8/2026 giữ đủ mọi quy tắc cứng 4227ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 9/2026 giữ đủ mọi quy tắc cứng 4481ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 10/2026 giữ đủ mọi quy tắc cứng 3441ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 11/2026 giữ đủ mọi quy tắc cứng 3520ms
+   ✓ Scheduler: chạy thử 12 tháng liên tiếp > tháng 12/2026 giữ đủ mọi quy tắc cứng 3070ms
+   ✓ Scheduler: hợp đồng tuần cao hơn sức chứa > 2 người 60h/tuần / tháng 4 533ms
+   ✓ Scheduler: hợp đồng tuần cao hơn sức chứa > 2 người 60h/tuần / tháng 4 – Fehlbetrag wird als Warnung gemeldet 542ms
+   ✓ Scheduler: có ngày đóng cửa > không xếp ca vào ngày đóng cửa và giữ quy tắc cứng 3094ms
+ ✓ src/lib/__tests__/ansushibar.test.ts (15 tests) 273251ms
+   ✓ An Sushibar > keeps minijobs on weekends, holidays closed, contracts capped 39204ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-1 25279ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-2 24343ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-3 23481ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-4 22821ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-5 13919ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-6 13709ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-7 24885ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-8 19742ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-9 12460ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-10 16316ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-11 14382ms
+   ✓ An Sushibar contract completion > fills feasible monthly hours in 2026-12 22695ms
 
- Test Files  10 passed (10)
-      Tests  81 passed (81)
-   Start at  22:59:02
-   Duration  158.19s (transform 1.49s, setup 0ms, collect 5.39s, tests 220.28s, environment 4ms, prepare 2.43s)
+ Test Files  11 passed (11)
+      Tests  85 passed (85)
+   Start at  23:07:17
+   Duration  275.39s (transform 2.56s, setup 0ms, collect 8.70s, tests 368.16s, environment 5ms, prepare 3.71s)
 
