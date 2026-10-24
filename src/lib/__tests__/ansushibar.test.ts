@@ -40,6 +40,12 @@ describe("An Sushibar contract completion", () => {
   const validation = validateSchedule(employees,shifts,2026,open,store.workHours);
   expect(validation.errors.filter(e=>e.severity!=="warning")).toEqual([]);
   if(month===10) {
+   const paidOn = (day: string) => shifts.filter(s=>s.date===`2026-10-${day}`).reduce((n,s)=>n+s.paidMinutes,0);
+   const fridays = ["02","09","16","23","30"].map(paidOn);
+   expect(Math.max(...fridays)-Math.min(...fridays)).toBeLessThanOrEqual(30);
+   const normal=["01","05","06","07","08","12","13","14","15","19","20","21","22","26","27","28","29"].map(paidOn);
+   expect(Math.max(...normal)-Math.min(...normal)).toBeLessThanOrEqual(30);
+   expect(Math.min(...fridays)).toBeGreaterThan(Math.max(...normal));
    expect(employees.reduce((n,e)=>n+e.targetMinutes,0)).toBe(702*60+18);
    expect(validation.summaries.reduce((n,e)=>n+e.targetMinutes-e.assignedMinutes,0)).toBe(18);
   }

@@ -1086,5 +1086,59 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
    result=[...result,...best.shifts];
   }
  }
- return improveCoverage(result,employees,days,holidays,dailyTargets,ctx).sort((a,b)=>a.date.localeCompare(b.date)||a.startMinutes-b.startMinutes||a.employeeId.localeCompare(b.employeeId));
+ // Monthly contracts may move across ISO weeks: equal weekdays share one monthly target.
+ const totalHours = result.reduce((n,s)=>n+s.paidMinutes,0)/60;
+ const balancedTargets = weightedDailyTargets(openDates,totalHours,date=>effectiveWeekdayKey(date,holidays),
+  date=>openMinutesOfBlocks(days.get(date)!.blocks),ctx.weights,
+  date=>minimumStaffHours(days.get(date)!.blocks,effectiveWeekdayKey(date,holidays),ctx.rules),
+  date=>openMinutesOfBlocks(days.get(date)!.blocks)/60);
+ for(let pass=0;pass<100;pass++) {
+  const totals=new Map(openDates.map(date=>[date,result.filter(s=>s.date===date).reduce((n,s)=>n+s.paidMinutes,0)/60]));
+  const delta=(date:string)=>(totals.get(date) ?? 0)-(balancedTargets.get(date) ?? 0);
+  const donors=[...openDates].sort((a,b)=>delta(b)-delta(a)).slice(0,8);
+  const receivers=[...openDates].sort((a,b)=>delta(a)-delta(b)).slice(0,8);
+  let best: {result:Shift[];gain:number} | undefined;
+  for(const from of donors) for(const to of receivers) {
+   if(from===to || delta(from)-delta(to)<0.75) continue;
+   for(const employee of employees) {
+    if(employee.fixedShift || (employee.weeklyHours!=null && weekStartOf(from)!==weekStartOf(to))) continue;
+    if(!mayWorkOn(employee,to) || ctx.blocked.get(employee.id)?.has(to)) continue;
+    const own=result.filter(s=>s.employeeId===employee.id);
+    const source=own.filter(s=>s.date===from), dest=own.filter(s=>s.date===to);
+    const sourcePaid=source.reduce((n,s)=>n+s.paidMinutes,0), destPaid=dest.reduce((n,s)=>n+s.paidMinutes,0);
+    const amount=destPaid ? SLOT : MIN_SHIFT;
+    if(sourcePaid<amount || (sourcePaid-amount>0 && sourcePaid-amount<MIN_SHIFT) || destPaid+amount>MAX_PAID) continue;
+    if((delta(from)**2+delta(to)**2)-((delta(from)-amount/60)**2+(delta(to)+amount/60)**2)<0.1) continue;
+    const worked=new Set(own.filter(s=>s.date!==from || sourcePaid>amount).map(s=>s.date));
+    if(consecutiveRunLengthWith(worked,to)>6) continue;
+    if(!worked.has(to) && [...worked].filter(date=>weekStartOf(date)===weekStartOf(to)).length>=dayLimit(employee)) continue;
+    const rest=result.filter(s=>!source.includes(s)&&!dest.includes(s));
+    const place=(date:string,paid:number):Shift[]|undefined=>{
+     if(!paid) return [];
+     const day=days.get(date)!, weekday=effectiveWeekdayKey(date,holidays);
+     const others=rest.filter(s=>s.date===date);
+     let chosen:Shift[]|undefined, cost=Infinity;
+     for(const option of optionsFor(employee,date,paid,day.blocks,true,weekday,ctx)) {
+      const next=dayCost([...others,...option.shifts],day.blocks,weekday,balancedTargets.get(date),ctx);
+      if(next<cost) {cost=next;chosen=option.shifts;}
+     }
+     return chosen;
+    };
+    const nextSource=place(from,sourcePaid-amount), nextDest=place(to,destPaid+amount);
+    if(!nextSource || !nextDest) continue;
+    const next=[...rest,...nextSource,...nextDest];
+    const score=(list:Shift[])=>[from,to].reduce((n,date)=>{
+      const onDay=list.filter(s=>s.date===date), day=days.get(date)!;
+      return n+dayCost(onDay,day.blocks,effectiveWeekdayKey(date,holidays),balancedTargets.get(date),ctx)
+       +(((onDay.reduce((n,s)=>n+s.paidMinutes,0)/60)-(balancedTargets.get(date) ?? 0))**2)*100000;
+    },0);
+    if([from,to].some(date=>leerMinuten(next.filter(s=>s.date===date),days.get(date)!.blocks)>leerMinuten(result.filter(s=>s.date===date),days.get(date)!.blocks))) continue;
+    const gain=score(result)-score(next);
+    if(gain>0.01 && (!best || gain>best.gain)) best={result:next,gain};
+   }
+  }
+  if(!best) break;
+  result=best.result;
+ }
+ return improveCoverage(result,employees,days,holidays,balancedTargets,ctx).sort((a,b)=>a.date.localeCompare(b.date)||a.startMinutes-b.startMinutes||a.employeeId.localeCompare(b.employeeId));
 }

@@ -172,7 +172,11 @@ export function ScheduleTab({
       for (const w of DEBUG_WINDOWS) {
         let min: number | null = null;
         for (let t = Math.max(w.from, from); t + 30 <= Math.min(w.to, to); t += 30) {
-          const count = dayShifts.filter((s) => workingAt(s, t)).length;
+          const count = dayShifts.filter((s) => {
+            if (!workingAt(s, t)) return false;
+            const role = schedule.employees.find((e) => e.id === s.employeeId)?.workRole;
+            return !("group" in w) || role === w.group || role === "BOTH";
+          }).length;
           min = min == null ? count : Math.min(min, count);
         }
         windows.set(w.key, min);
@@ -416,10 +420,10 @@ export function ScheduleTab({
               />
               <SummaryRow label="Ca sáng" dates={gridDates} value={(d) => String(dayStats.get(d)!.early)} />
               <SummaryRow label="Ca chiều" dates={gridDates} value={(d) => String(dayStats.get(d)!.late)} />
-              {schedule.shifts.length > 0 && (
+              {(
                 <>
-                  <SummaryRow label="Mở 09:00" dates={gridDates} value={(d) => debugStats.get(d)?.open ?? "–"} />
-                  <SummaryRow label="Đóng 20:00" dates={gridDates} value={(d) => debugStats.get(d)?.close ?? "–"} />
+                  <SummaryRow label="Mở 10:30" dates={gridDates} value={(d) => debugStats.get(d)?.open ?? "–"} />
+                  <SummaryRow label="Đóng 21:00" dates={gridDates} value={(d) => debugStats.get(d)?.close ?? "–"} />
                   {DEBUG_WINDOWS.map((w) => (
                     <MinPeopleRow
                       key={w.key}
@@ -452,11 +456,16 @@ export function ScheduleTab({
 
 /** Khung kiểm tra cho dòng debug (khớp khung khách đông 09–12, 14–17). */
 const DEBUG_WINDOWS = [
-  { key: "all", label: "Ít nhất cả ngày", from: 0, to: 24 * 60 },
-  { key: "am", label: "Ít nhất 9–12", from: 9 * 60, to: 12 * 60 },
-  { key: "noon", label: "Ít nhất 12–14", from: 12 * 60, to: 14 * 60 },
-  { key: "pm", label: "Ít nhất 14–17", from: 14 * 60, to: 17 * 60 },
-  { key: "eve", label: "Ít nhất 17–20", from: 17 * 60, to: 20 * 60 },
+  { key: "all", label: "Ít nhất cả ngày", from: 630, to: 1260 },
+  { key: "am", label: "Ít nhất 10:30–12", from: 630, to: 720 },
+  { key: "noon", label: "Ít nhất 12–14", from: 720, to: 840 },
+  { key: "pm", label: "Ít nhất 14–17:30", from: 840, to: 1050 },
+  { key: "peak", label: "Ít nhất 17:30–19:30", from: 1050, to: 1170 },
+  { key: "eve", label: "Ít nhất 19:30–21", from: 1170, to: 1260 },
+  { key: "kitchen", label: "Bếp ít nhất cả ngày", from: 630, to: 1260, group: "KITCHEN" },
+  { key: "service", label: "Bồi ít nhất cả ngày", from: 630, to: 1260, group: "SERVICE_SUSHI" },
+  { key: "kitchen-peak", label: "Bếp 17:30–19:30", from: 1050, to: 1170, group: "KITCHEN" },
+  { key: "service-peak", label: "Bồi 17:30–19:30", from: 1050, to: 1170, group: "SERVICE_SUSHI" },
 ] as const;
 
 /** Số người ít nhất: 0 = đỏ (tiệm trống), 1 = vàng. */

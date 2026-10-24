@@ -12,11 +12,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 20.5,
+      "belowTwoHours": 16.5,
       "peakMissingHours": 0,
       "peakHours": 20,
-      "kitchenMissingHours": 44,
-      "serviceMissingHours": 55,
+      "kitchenMissingHours": 36,
+      "serviceMissingHours": 56,
       "errors": [],
       "warnings": [
         {
@@ -82,11 +82,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 18.5,
+      "belowTwoHours": 18,
       "peakMissingHours": 0,
       "peakHours": 16,
-      "kitchenMissingHours": 35,
-      "serviceMissingHours": 39,
+      "kitchenMissingHours": 36,
+      "serviceMissingHours": 38.5,
       "errors": [],
       "warnings": [
         {
@@ -152,11 +152,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 16,
+      "belowTwoHours": 15.5,
       "peakMissingHours": 0,
       "peakHours": 16,
-      "kitchenMissingHours": 24,
-      "serviceMissingHours": 40.5,
+      "kitchenMissingHours": 29,
+      "serviceMissingHours": 37,
       "errors": [],
       "warnings": [
         {
@@ -224,11 +224,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 27,
+      "belowTwoHours": 18,
       "peakMissingHours": 0,
       "peakHours": 14,
-      "kitchenMissingHours": 34.5,
-      "serviceMissingHours": 36,
+      "kitchenMissingHours": 28.5,
+      "serviceMissingHours": 32.5,
       "errors": [],
       "warnings": [
         {
@@ -294,11 +294,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 12.5,
+      "belowTwoHours": 11,
       "peakMissingHours": 0,
       "peakHours": 18,
-      "kitchenMissingHours": 19,
-      "serviceMissingHours": 33,
+      "kitchenMissingHours": 17.5,
+      "serviceMissingHours": 30,
       "errors": [],
       "warnings": [
         {
@@ -364,11 +364,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 14.5,
+      "belowTwoHours": 13.5,
       "peakMissingHours": 0.5,
       "peakHours": 16,
-      "kitchenMissingHours": 26.5,
-      "serviceMissingHours": 33.5,
+      "kitchenMissingHours": 22.5,
+      "serviceMissingHours": 31,
       "errors": [],
       "warnings": [
         {
@@ -434,11 +434,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 19.5,
+      "belowTwoHours": 20.5,
       "peakMissingHours": 0,
       "peakHours": 18,
-      "kitchenMissingHours": 34.5,
-      "serviceMissingHours": 55,
+      "kitchenMissingHours": 39,
+      "serviceMissingHours": 48.5,
       "errors": [],
       "warnings": [
         {
@@ -504,11 +504,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 18.5,
+      "belowTwoHours": 17.5,
       "peakMissingHours": 0,
       "peakHours": 18,
-      "kitchenMissingHours": 29,
-      "serviceMissingHours": 49,
+      "kitchenMissingHours": 33,
+      "serviceMissingHours": 44,
       "errors": [],
       "warnings": [
         {
@@ -574,7 +574,7 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 13.5,
+      "belowTwoHours": 12,
       "peakMissingHours": 0,
       "peakHours": 16,
       "kitchenMissingHours": 24,
@@ -644,11 +644,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 13,
+      "belowTwoHours": 12.5,
       "peakMissingHours": 0,
       "peakHours": 16,
-      "kitchenMissingHours": 28.5,
-      "serviceMissingHours": 31.5,
+      "kitchenMissingHours": 31,
+      "serviceMissingHours": 39.5,
       "errors": [],
       "warnings": [
         {
@@ -714,11 +714,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 20.5,
+      "belowTwoHours": 18,
       "peakMissingHours": 0,
       "peakHours": 16,
-      "kitchenMissingHours": 24.5,
-      "serviceMissingHours": 49.5,
+      "kitchenMissingHours": 26.5,
+      "serviceMissingHours": 49,
       "errors": [],
       "warnings": [
         {
@@ -786,11 +786,11 @@
       "noOpen": 0,
       "noClose": 0,
       "emptyHours": 0,
-      "belowTwoHours": 19,
+      "belowTwoHours": 12.5,
       "peakMissingHours": 0,
       "peakHours": 12,
-      "kitchenMissingHours": 36.5,
-      "serviceMissingHours": 43,
+      "kitchenMissingHours": 33.5,
+      "serviceMissingHours": 45.5,
       "errors": [],
       "warnings": [
         {
