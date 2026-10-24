@@ -37,6 +37,11 @@ describe("An Sushibar contract completion", () => {
   expect(shifts.reduce((n,s)=>n+s.paidMinutes,0)).toBe(702*60);
   for(const employee of employees) expect(shifts.filter(s=>s.employeeId===employee.id).reduce((n,s)=>n+s.paidMinutes,0)).toBe(Math.floor(employee.targetMinutes/30)*30);
   const open=datesOfMonth(2026,month).filter(date=>!resolveDay(store.workHours,date,publicHolidays(2026),{}).closed);
-  expect(validateSchedule(employees,shifts,2026,open,store.workHours).errors.filter(e=>e.severity!=="warning")).toEqual([]);
+  const validation = validateSchedule(employees,shifts,2026,open,store.workHours);
+  expect(validation.errors.filter(e=>e.severity!=="warning")).toEqual([]);
+  if(month===10) {
+   expect(employees.reduce((n,e)=>n+e.targetMinutes,0)).toBe(702*60+18);
+   expect(validation.summaries.reduce((n,e)=>n+e.targetMinutes-e.assignedMinutes,0)).toBe(18);
+  }
  },20000);
 });
