@@ -904,7 +904,7 @@ function EmployeeSheet({
                       })}
                       <button
                         type="button"
-                        onClick={() => set("windows", [...d.windows, { days: WEEKDAY_ORDER.slice(1), start: "09:00", end: "14:00" }])}
+                        onClick={() => set("windows", [...d.windows, { days: WEEKDAY_ORDER.slice(1), start: "17:30", end: "19:30" }])}
                         className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-slate-600"
                       >
                         + Thêm khung giờ <span className="text-slate-400">(ví dụ T3–CN 17:00–22:00)</span>

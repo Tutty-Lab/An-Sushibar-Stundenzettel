@@ -32,13 +32,12 @@ export type RuleId =
 
 export type Rule = { id: RuleId; kind: RuleKind; title: string; detail: string };
 
-// J'ADEQA: ein Studio (keine Regel „zwei Läden" in der Liste), die Inhaberin ist
-// immer da und zählt bei der Besetzung mit.
+// An Sushibar: nhà hàng một địa điểm, chủ chỉ tính khi có ca nhập tay.
 export const RULES: readonly Rule[] = [
   { id: "open-hours", kind: "hard", title: "Chỉ trong giờ mở cửa", detail: "T2–CN 10:30–21:00 liên tục. Ngày lễ đóng cửa." },
-  { id: "closing", kind: "hard", title: "Phủ kín giờ mở cửa", detail: "Từ lúc mở tới lúc đóng luôn có ít nhất 1 người. Chủ chỉ tính khi có ca nhập tay." },
+  { id: "closing", kind: "hard", title: "Phủ kín giờ mở cửa", detail: "Ưu tiên phủ riêng bếp và bồi 10:30–21:00. Người linh hoạt chỉ đảm nhiệm một vị trí tại một thời điểm. Chủ chỉ tính khi có ca nhập tay." },
   { id: "shift-length", kind: "hard", title: "Ca 3–8 giờ, nghỉ đúng luật", detail: "Mỗi ca ít nhất 3 giờ, tối đa 8 giờ công một ngày; giờ nghỉ theo luật lao động." },
-  { id: "max-days", kind: "hard", title: "Tối đa 5 ngày/tuần, 6 ngày liên tiếp", detail: "Nhân viên làm tối đa 5 ngày mỗi tuần (hoặc „Số ngày làm / tuần\" đã đặt), không quá 6 ngày liên tiếp." },
+  { id: "max-days", kind: "hard", title: "Tối đa 6 ngày liên tiếp", detail: "Nhân viên làm tối đa 6 ngày mỗi tuần (hoặc „Số ngày làm / tuần\" đã đặt), không quá 6 ngày liên tiếp." },
   { id: "days-off", kind: "hard", title: "Ngày nghỉ cố định", detail: "Không xếp ca vào ngày nghỉ cố định của người đó." },
   { id: "employment-period", kind: "hard", title: "Ngày vào làm / nghỉ việc", detail: "Không xếp ca trước ngày vào làm hoặc sau ngày nghỉ việc." },
   { id: "contract-max", kind: "hard", title: "Không quá giờ hợp đồng", detail: "Không xếp quá giờ tháng (hoặc giờ tuần với hợp đồng theo tuần)." },
@@ -48,7 +47,7 @@ export const RULES: readonly Rule[] = [
   { id: "peak-staff", kind: "soft", title: "Số người giờ cao điểm", detail: "Cao điểm T6–T7 17:30–19:30: ưu tiên tăng người." },
   { id: "day-weights", kind: "soft", title: "Ngày đông nhiều giờ hơn", detail: "Thứ Sáu và Thứ Bảy (hệ số 1,5) nhận nhiều giờ hơn ngày thường." },
   { id: "own-shift-length", kind: "soft", title: "Độ dài ca riêng", detail: "Mỗi ngày làm nằm trong khoảng giờ đã đặt cho người đó." },
-  { id: "spread-evenly", kind: "soft", title: "Rải đều trong tháng", detail: "Giờ chia đều theo tuần; có Độ dài ca thì nhiều ca ngắn hơn." },
+  { id: "spread-evenly", kind: "soft", title: "Rải đều trong tháng", detail: "Cân giờ các ngày cùng loại trong tháng sau khi ưu tiên phủ bếp/bồi và cao điểm." },
   { id: "preferred-windows", kind: "soft", title: "Khung giờ ưu tiên", detail: "Xếp vào ngày và giờ người đó muốn, nếu số người và giờ định mức cho phép." },
 ];
 

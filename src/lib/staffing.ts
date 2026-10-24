@@ -1,3 +1,4 @@
+import { RESTAURANT_POLICY } from "./restaurantPolicy";
 import type { Shift } from "../types";
 import { DAY_WEIGHTS, type WeekdayKey } from "./demand";
 import type { DayBlocks, DayWindow } from "./workHours";
@@ -10,15 +11,9 @@ export type StaffingWindow = {
   maxStaff: number;
 };
 
-/** Khung giờ khách đông: 09:00–12:00 und 14:00–17:00 (Mo, Do, Fr). */
-export const PEAK_MORNING = [17 * 60 + 30, 19 * 60 + 30] as const;
-export const PEAK_AFTERNOON = [17 * 60 + 30, 19 * 60 + 30] as const;
-/** Nachmittags-Hauptzeit – dort legt der Planer ungern Pausen hin. */
-export const PEAK_START = PEAK_AFTERNOON[0];
-export const PEAK_END = PEAK_AFTERNOON[1];
-/** Samstag ohne eigene Hauptzeit (Altnamen für die Doku). */
-export const SATURDAY_PEAK_START = PEAK_START;
-export const SATURDAY_PEAK_END = PEAK_END;
+/** An Sushibar: chỉ cao điểm tối 17:30–19:30. */
+export const PEAK_START = RESTAURANT_POLICY.peak.startMinutes;
+export const PEAK_END = RESTAURANT_POLICY.peak.endMinutes;
 
 /**
  * Eine Besetzungsregel: WO (Zeitspanne je Öffnungsblock) und WIE VIELE.
@@ -52,17 +47,10 @@ export const clip = (from: number, to: number) => (blocks: DayBlocks): DayWindow
 export const wholeDay = (blocks: DayBlocks): DayWindow[] =>
   blocks.map((block) => ({ startMinutes: block.startMinutes, endMinutes: block.endMinutes }));
 
-/** Ngày đông khách: thứ Hai, thứ Năm, thứ Sáu. */
+/** Ngày đông khách: thứ Sáu và thứ Bảy. */
 export const BUSY_DAYS: readonly WeekdayKey[] = ["friday", "saturday"];
 
-/**
- * An Sushibar – Termine über Treatwell, keine festen Schichten.
- *
- *  - „Trong giờ mở cửa" – harte Regel: von 09:00 (Aufschließen) bis 20:00
- *    (Abschließen) nie null Personen. Damit beginnt jeden Tag jemand um 09:00
- *    und jemand endet um 20:00.
- *  - Mo, Do, Fr 09–12 und 14–17: zweite Person (höchstens 4).
- */
+/** Mức phủ vận hành: bếp + bồi; thêm người T6–T7 trong cao điểm tối. */
 export const ANSUSHIBAR_STAFFING_RULES: readonly StaffingRule[] = [
  { label: "Trong giờ mở cửa", when: "10:30–21:00", minStaff: 2, maxStaff: Infinity, scaled: false, windows: wholeDay },
  { label: "Cao điểm tối T6, T7", when: "17:30–19:30", minStaff: 3, maxStaff: 6, scaled: false, weekdays: ["friday", "saturday"], windows: clip(1050, 1170) },
@@ -100,10 +88,7 @@ export function staffingWindows(
  * được thoả: với từng 30 phút mở cửa, lấy mức cao nhất trong các khung phủ lên
  * nó, rồi cộng lại.
  *
- * Ví dụ Papenstieg ngày thường: phủ 09:00–19:00 với 1 người = 10h, cộng người
- * thứ hai 15:00–19:00 = 4h → 14h. Đây là phần giờ KHÔNG phụ thuộc hệ số ngày:
- * ngày vắng cũng phải phủ như ngày đông. Vì vậy nó được cấp trước, phần dư mới
- * chia theo hệ số (xem weightedDailyTargets).
+ * An Sushibar: 2 người suốt giờ mở cửa, thêm người trong cao điểm T6/T7.
  */
 export function minimumStaffHours(
   blocks: DayBlocks,
@@ -126,16 +111,7 @@ export function minimumStaffHours(
 }
 
 // ── Đường nhu cầu trong ngày ────────────────────────────────────────────────
-/**
- * Nhu cầu tương đối theo giờ (1,0 = bình thường) – dạng „ngọn núi": mở cửa
- * vắng, trưa nhích lên, cao điểm 15:00–19:00, cuối ngày vãn. Thuật toán chia
- * GIỜ CÔNG CỦA NGÀY (đã nhân hệ số ngày) theo đường này thành số người mục tiêu
- * cho từng 30 phút, rồi phạt độ lệch theo bình phương – nhờ vậy số người lên
- * xuống mượt, không dồn cục.
- *
- * Tiệm nail mở LIÊN TỤC cả ngày (không nghỉ trưa). Thứ Bảy khách tới sớm nên
- * cao điểm kéo dài từ 11:00 (cột phải).
- */
+/** Nhu cầu riêng An Sushibar; cao điểm tối thứ Sáu và thứ Bảy. */
 export type DemandBand = { startMinutes: number; endMinutes: number; level: number; label: string };
 
 const band = (from: string, to: string, level: number, label: string): DemandBand => {
@@ -144,14 +120,14 @@ const band = (from: string, to: string, level: number, label: string): DemandBan
 };
 
 const restaurantDemand = [band("10:30", "17:30", 1, "Ban ngày"), band("17:30", "19:30", 2.5, "Cao điểm tối"), band("19:30", "21:00", 1, "Cuối ngày")];
-export const DEMAND_PROFILE = { normal: restaurantDemand, saturday: restaurantDemand };
+export const DEMAND_PROFILE = { normal: [band("10:30", "21:00", 1, "Ngày thường")], saturday: restaurantDemand };
 
 export function demandProfileOf(
   weekday: WeekdayKey,
   _weights: Record<WeekdayKey, number> = DAY_WEIGHTS,
 ): readonly DemandBand[] {
-  // Gleiche Kurve an allen Tagen; starke Tage (Mo/Do/Fr) über das Tagesgewicht.
-  return weekday === "saturday" ? DEMAND_PROFILE.saturday : DEMAND_PROFILE.normal;
+  // Friday and Saturday share the restaurant evening peak.
+  return BUSY_DAYS.includes(weekday) ? DEMAND_PROFILE.saturday : DEMAND_PROFILE.normal;
 }
 
 /** Relative workload at a minute (1 outside all bands). */
@@ -248,9 +224,4 @@ export function weightedDailyTargets(
     }
   }
   return new Map(dates.map((date) => [date, share(date, total)]));
-}
-
-/** Soft preference including the owner; never a minimum-staff validation rule. */
-export function preferredStaff(weekday: WeekdayKey): number {
-  return weekday === "friday" || weekday === "saturday" ? 3 : 0;
 }

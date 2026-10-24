@@ -1,5 +1,5 @@
+import { RESTAURANT_POLICY, missingRestaurantRoles } from "./restaurantPolicy";
 import { employeeForMonth } from "./history";
-import { ownerPresence } from "./owner";
 import type { Employee, PreferredWindow, Shift } from "../types";
 import { DAY_WEIGHTS, datesOfMonth, parseIsoDate, weekdayKeyOf, type WeekdayKey } from "./demand";
 import { monthlyTargetMinutesFor, weeklyBudgetMinutes, weeklyTargetMinutes } from "./contract";
@@ -11,7 +11,6 @@ import { publicHolidays } from "./holidays";
 import { weekStartOf } from "./weeks";
 import { minutesOutsidePreferred, ownShiftRangeMinutes, preferredWindowsOf } from "./preferredWindows";
 import {
-  preferredStaff,
   PEAK_END,
   PEAK_START,
   STAFFING_RULES,
@@ -32,6 +31,7 @@ import {
  * weder Regeln noch Zwischenergebnisse teilen.
  */
 type Ctx = {
+  roles: Map<string, Employee["workRole"]>;
   rules: readonly StaffingRule[];
   weights: Record<WeekdayKey, number>;
   /** employeeId -> Daten, an denen die Person im anderen Laden arbeitet. */
@@ -260,6 +260,26 @@ function dayModel(blocks: DayBlocks, weekday: WeekdayKey, targetHours: number, c
  * jemanden aus einer schwach besetzten Randstunde in die Hauptzeit – dann steht
  * niemand mehr im Laden. Offen mit einer Person ist immer besser als zu.
  */
+function restaurantRoleShortage(shifts: Shift[], minute: number, ctx: Ctx): number {
+ // Generic fixtures without role data retain the ordinary headcount model.
+ if (![...ctx.roles.values()].some(Boolean)) return 0;
+ let kitchen=0, service=0, flexible=0;
+ for (const shift of shifts) {
+  if (!workingAt(shift,minute)) continue;
+  const role=ctx.roles.get(shift.employeeId);
+  if(role==="KITCHEN") kitchen++;
+  else if(role==="SERVICE_SUSHI") service++;
+  else if(role==="BOTH") flexible++;
+ }
+ return missingRestaurantRoles(kitchen,service,flexible);
+}
+function roleGapMinutes(shifts: Shift[], blocks: DayBlocks, ctx: Ctx): number {
+ let total=0;
+ for(const block of blocks) for(let minute=block.startMinutes;minute<block.endMinutes;minute+=SLOT)
+  total+=restaurantRoleShortage(shifts,minute,ctx)*SLOT;
+ return total;
+}
+
 function dayCost(shifts: Shift[], blocks: DayBlocks, weekday: WeekdayKey, targetHours: number | undefined, ctx: Ctx): number {
   if (blocks.length === 0) return 0;
   const model = dayModel(blocks, weekday, targetHours ?? 0, ctx);
@@ -268,25 +288,23 @@ function dayCost(shifts: Shift[], blocks: DayBlocks, weekday: WeekdayKey, target
     for (const shift of shifts) if (workingAt(shift, minute)) staff++;
     return staff;
   });
-  // Prefer three people on Friday/Saturday without changing contract budgets
-  // or treating the preference as a staffing validation failure.
-  let cost = counts.reduce((sum, count) => sum + Math.max(0, preferredStaff(weekday) - count) * SLOT * 300, 0);
+  // An Sushibar: kitchen and service must be staffed separately. Flexible staff
+  // can fill either role, never both at the same time. Friday/Saturday need an
+  // extra person only during 17:30–19:30, not throughout the day.
+  let cost = model.minutes.reduce((sum, minute) => sum + restaurantRoleShortage(shifts,minute,ctx) * SLOT * RESTAURANT_POLICY.missingRoleMinuteCost, 0);
   const mussBesetzt = new Set<number>();
   for (const window of model.windows) {
     for (let k = 0; k < window.slots.length; k++) {
       const staff = counts[window.slots[k]];
-      cost += (Math.max(0, window.minStaff - staff) + Math.max(0, staff - window.maxStaff)) * window.overlap[k] * 500;
+      cost += (Math.max(0, window.minStaff - staff) + Math.max(0, staff - window.maxStaff)) * window.overlap[k] * (window.minStaff >= RESTAURANT_POLICY.peakStaff ? RESTAURANT_POLICY.peakMissingMinuteCost : 500);
       if (window.minStaff > 0) mussBesetzt.add(window.slots[k]);
     }
   }
-  // Leerstand zählt EINMAL je halber Stunde, nicht je Fenster. Sonst wäre ein
-  // Loch um 13:30 (Öffnungszeit UND Hauptzeit) doppelt so teuer wie eines um
-  // 09:00 (nur Öffnungszeit), und der Planer schiebt das Loch lieber auf den
-  // Ladenschluss- oder Öffnungsrand. Leer ist leer.
-  for (const slot of mussBesetzt) if (counts[slot] === 0) cost += SLOT * 4500;
+  // Count empty opening slots once, independently of overlapping coverage rules.
+  for (const slot of mussBesetzt) if (counts[slot] === 0) cost += SLOT * RESTAURANT_POLICY.emptyMinuteCost;
   for (let i = 0; i < counts.length; i++) cost += (counts[i] - model.targets[i]) ** 2 * SLOT_DEVIATION_COST;
   const paidHours = shifts.reduce((sum, shift) => sum + shift.paidMinutes, 0) / 60;
-  cost += (paidHours - (targetHours ?? 0)) ** 2 * 1500;
+  cost += (paidHours - (targetHours ?? 0)) ** 2 * RESTAURANT_POLICY.balanceHourCost;
   for (const shift of shifts) {
     const windows = ctx.windows.get(shift.employeeId);
     if (windows) cost += minutesOutsidePreferred(windows, dayOf(shift.date), shift) * OUTSIDE_WINDOW_COST;
@@ -405,9 +423,7 @@ function chooseWeekWith(
     const ideal = averageFactor > 0 ? target / Math.max(1, preferredCount) * factorOf(date) / averageFactor : 0;
     const before = dayCost(occupied, day.blocks, weekday, dailyTargets.get(date), ctx);
     const candidates: { choice: Choice; cost: number }[] = [];
-    // Continuous days (CN/lễ, one long block): a single shift always spans the
-    // afternoon unless it is short. Allow the full 3–9 h range there and a soft
-    // length preference, so lunch-only and evening-only shifts can shape both peaks.
+    // Explore 3–8 paid hours for continuous restaurant opening days.
     const continuous = day.blocks.length === 1 && !fixed && !own && target >= MIN_SHIFT;
     const dayDurations = continuous
       ? Array.from({ length: Math.floor((Math.min(MAX_PAID, target) - MIN_SHIFT) / SLOT) + 1 }, (_, i) => MIN_SHIFT + i * SLOT)
@@ -593,6 +609,7 @@ function tradeMinutes(
   /** Fehlt an diesem Tag irgendwo jemand gegenüber der Untergrenze? */
   const understaffed = (shifts: Shift[], date: string): boolean => {
     const onDay = shifts.filter((s) => s.date === date);
+    if(roleGapMinutes(onDay,days.get(date)!.blocks,ctx)>0) return true;
     for (const window of staffingWindows(days.get(date)!.blocks, effectiveWeekdayKey(date, holidays), ctx.rules)) {
       for (let minute = window.startMinutes; minute < window.endMinutes; minute += SLOT) {
         let staff = 0;
@@ -887,10 +904,9 @@ function improveCoverage(result: Shift[], employees: Employee[], days: Map<strin
 
 export function generateWeeklySchedule(input: WeeklyInput, existing: Shift[] = []): Shift[] {
   input = { ...input, employees: input.employees.map((e) => employeeForMonth(e, `${input.year}-${String(input.month).padStart(2, "0")}`)) };
-  const owners = input.employees.filter((e) => e.isOwner);
-  existing = [...existing, ...ownerPresence(input.year, input.month, input.workHours, input.overrides, owners, input.holidays)];
   input = { ...input, employees: input.employees.filter((e) => !e.isOwner) };
   const ctx: Ctx = {
+    roles: new Map(input.employees.map(e=>[e.id,e.workRole])),
     rules: input.rules ?? STAFFING_RULES,
     weights: input.weights ?? DAY_WEIGHTS,
     blocked: new Map(Object.entries(input.blockedDays ?? {}).map(([id, dates]) => [id, new Set(dates)])),
@@ -1046,7 +1062,7 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
  const holidays = input.holidays ?? publicHolidays(input.year);
  const days = new Map(datesOfMonth(input.year,input.month).map(date=>[date,resolveDay(input.workHours,date,holidays,input.overrides ?? {})]));
  const openDates = [...days].filter(([,d])=>!d.closed).map(([date])=>date);
- const ctx: Ctx = { rules: input.rules ?? STAFFING_RULES, weights: input.weights ?? DAY_WEIGHTS,
+ const ctx: Ctx = { roles: new Map(employees.map(e=>[e.id,e.workRole])), rules: input.rules ?? STAFFING_RULES, weights: input.weights ?? DAY_WEIGHTS,
  blocked: new Map(Object.entries(input.blockedDays ?? {}).map(([id,dates])=>[id,new Set(dates)])),
  tag: input.storeTag ?? "default", windows: new Map(employees.map(e=>[e.id,preferredWindowsOf(e)])) };
  const targets = new Map(employees.map(e=>[e.id,Math.floor(monthlyTargetMinutesFor(e,openDates,input.workHours)/SLOT)*SLOT]));
@@ -1095,11 +1111,12 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
  for(let pass=0;pass<100;pass++) {
   const totals=new Map(openDates.map(date=>[date,result.filter(s=>s.date===date).reduce((n,s)=>n+s.paidMinutes,0)/60]));
   const delta=(date:string)=>(totals.get(date) ?? 0)-(balancedTargets.get(date) ?? 0);
-  const donors=[...openDates].sort((a,b)=>delta(b)-delta(a)).slice(0,8);
-  const receivers=[...openDates].sort((a,b)=>delta(a)-delta(b)).slice(0,8);
+  const donors=[...openDates].sort((a,b)=>delta(b)-delta(a));
+  const gaps = new Map(openDates.map(date=>[date,roleGapMinutes(result.filter(s=>s.date===date),days.get(date)!.blocks,ctx)]));
+  const receivers=[...openDates].sort((a,b)=>(gaps.get(b)!-gaps.get(a)!) || delta(a)-delta(b)).slice(0,8);
   let best: {result:Shift[];gain:number} | undefined;
   for(const from of donors) for(const to of receivers) {
-   if(from===to || delta(from)-delta(to)<0.75) continue;
+   if(from===to || (delta(from)-delta(to)<0.75 && !gaps.get(to))) continue;
    for(const employee of employees) {
     if(employee.fixedShift || (employee.weeklyHours!=null && weekStartOf(from)!==weekStartOf(to))) continue;
     if(!mayWorkOn(employee,to) || ctx.blocked.get(employee.id)?.has(to)) continue;
@@ -1108,7 +1125,7 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
     const sourcePaid=source.reduce((n,s)=>n+s.paidMinutes,0), destPaid=dest.reduce((n,s)=>n+s.paidMinutes,0);
     const amount=destPaid ? SLOT : MIN_SHIFT;
     if(sourcePaid<amount || (sourcePaid-amount>0 && sourcePaid-amount<MIN_SHIFT) || destPaid+amount>MAX_PAID) continue;
-    if((delta(from)**2+delta(to)**2)-((delta(from)-amount/60)**2+(delta(to)+amount/60)**2)<0.1) continue;
+    if(!gaps.get(to) && (delta(from)**2+delta(to)**2)-((delta(from)-amount/60)**2+(delta(to)+amount/60)**2)<0.1) continue;
     const worked=new Set(own.filter(s=>s.date!==from || sourcePaid>amount).map(s=>s.date));
     if(consecutiveRunLengthWith(worked,to)>6) continue;
     if(!worked.has(to) && [...worked].filter(date=>weekStartOf(date)===weekStartOf(to)).length>=dayLimit(employee)) continue;
@@ -1130,7 +1147,7 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
     const score=(list:Shift[])=>[from,to].reduce((n,date)=>{
       const onDay=list.filter(s=>s.date===date), day=days.get(date)!;
       return n+dayCost(onDay,day.blocks,effectiveWeekdayKey(date,holidays),balancedTargets.get(date),ctx)
-       +(((onDay.reduce((n,s)=>n+s.paidMinutes,0)/60)-(balancedTargets.get(date) ?? 0))**2)*100000;
+       +(((onDay.reduce((n,s)=>n+s.paidMinutes,0)/60)-(balancedTargets.get(date) ?? 0))**2)*RESTAURANT_POLICY.balanceHourCost;
     },0);
     if([from,to].some(date=>leerMinuten(next.filter(s=>s.date===date),days.get(date)!.blocks)>leerMinuten(result.filter(s=>s.date===date),days.get(date)!.blocks))) continue;
     const gain=score(result)-score(next);
@@ -1140,5 +1157,40 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
   if(!best) break;
   result=best.result;
  }
+ result = polishRestaurantPairs(result,employees,days,holidays,balancedTargets,ctx);
  return improveCoverage(result,employees,days,holidays,balancedTargets,ctx).sort((a,b)=>a.date.localeCompare(b.date)||a.startMinutes-b.startMinutes||a.employeeId.localeCompare(b.employeeId));
+}
+
+/** Simultaneous role handovers escape the one-person-at-a-time local minimum. */
+function polishRestaurantPairs(result: Shift[], employees: Employee[], days: Map<string,Day>, holidays: Set<string>, targets: Map<string,number>, ctx: Ctx): Shift[] {
+ const output:Shift[]=[];
+ for(const [date,day] of days) {
+  let onDay=result.filter(s=>s.date===date);
+  if(day.closed || !roleGapMinutes(onDay,day.blocks,ctx)) {output.push(...onDay);continue;}
+  const weekday=effectiveWeekdayKey(date,holidays);
+  for(let pass=0;pass<2;pass++) {
+   let changed=false;
+   const active=employees.filter(e=>!e.fixedShift && onDay.some(s=>s.employeeId===e.id));
+   for(let i=0;i<active.length;i++) for(let j=i+1;j<active.length;j++) {
+    const a=active[i],b=active[j];
+    if(a.workRole!==b.workRole && a.workRole!=="BOTH" && b.workRole!=="BOTH") continue;
+    const ownA=onDay.filter(s=>s.employeeId===a.id),ownB=onDay.filter(s=>s.employeeId===b.id);
+    const rest=onDay.filter(s=>s.employeeId!==a.id && s.employeeId!==b.id);
+    const options=(employee:Employee,own:Shift[])=>[
+     {shifts:own,styleCost:0},
+     ...optionsFor(employee,date,own.reduce((n,s)=>n+s.paidMinutes,0),day.blocks,true,weekday,ctx).filter(option=>option.shifts.some(s=>s.startMinutes===day.window.startMinutes || s.endMinutes===day.window.endMinutes))
+    ];
+    let best=onDay, cost=dayCost(onDay,day.blocks,weekday,targets.get(date),ctx);
+    for(const x of options(a,ownA)) for(const y of options(b,ownB)) {
+     const next=[...rest,...x.shifts,...y.shifts];
+     const value=dayCost(next,day.blocks,weekday,targets.get(date),ctx);
+     if(value<cost-0.01) {best=next;cost=value;}
+    }
+    if(best!==onDay) {onDay=best;changed=true;}
+   }
+   if(!changed) break;
+  }
+  output.push(...onDay);
+ }
+ return output;
 }

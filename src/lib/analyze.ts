@@ -158,6 +158,20 @@ export function analyzeSchedule(input: AnalyzeInput): ScheduleAnalysis {
       }
     }
 
+    // Restaurant coverage is role-specific. A headcount of two cooks does not
+    // satisfy service coverage; BOTH staff are eligible for either role.
+    if(!day.closed && input.employees.some(e=>e.workRole)) {
+      for(const role of ["KITCHEN","SERVICE_SUSHI"] as const) for(const block of day.blocks) {
+        const points=coveragePoints(available,block.startMinutes,block.endMinutes).slice(0,-1);
+        const counts=points.map(minute=>new Set(available.filter(shift=>{
+          const assigned=employeesById.get(shift.employeeId)?.workRole;
+          return workingAt(shift,minute) && (assigned===role || assigned==="BOTH");
+        }).map(shift=>shift.employeeId)).size);
+        const minimum=counts.length?Math.min(...counts):0;
+        peaks.push({label:role==="KITCHEN"?"Bếp trong giờ mở cửa":"Bồi trong giờ mở cửa",minStaff:minimum,maxStaff:counts.length?Math.max(...counts):0,required:1,allowed:Infinity,ok:minimum>=1,startMinutes:block.startMinutes,endMinutes:block.endMinutes});
+      }
+    }
+
     days.push({
       date,
       weekday: weekdayKeyOf(parseIsoDate(date)),

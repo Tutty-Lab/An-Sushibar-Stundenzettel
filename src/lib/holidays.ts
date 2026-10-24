@@ -1,14 +1,4 @@
-// ============================================================================
-// Gesetzliche Feiertage in SACHSEN – das Studio liegt in Naumburg (01067).
-// Bewegliche Feiertage über die Osterformel (Gauß).
-//
-// Sachsen-Anhalt hat Reformationstag (31.10.) und Buß- und Bettag (Mittwoch vor dem
-// 23.11.). KEIN Feiertag in Naumburg: Heilige Drei Könige, Fronleichnam (nur
-// einzelne sorbische Gemeinden) und Allerheiligen.
-//
-// An diesen Tagen bleibt das Studio ZU (Ladenschluss) – siehe workHours.ts,
-// holidayClosed.
-// ============================================================================
+// An Sushibar, Naumburg (Sachsen-Anhalt). 10:30–21:00, lễ đóng.
 import { addDays, format } from "date-fns";
 
 /** Ostersonntag eines Jahres (Gauß'sche Osterformel, gregorianisch). */

@@ -1,10 +1,4 @@
-// ============================================================================
-// Öffnungszeiten je Wochentag. An Sushibar arbeitet nach Termin (Treatwell),
-// es muss aber jemand um 09:00 aufschließen und bis 20:00 da sein: Montag bis
-// Samstag 09:00–20:00 durchgehend. Sonntags und an Feiertagen (Sachsen-Anhalt) zu –
-// Öffnungstage noch vom Betrieb zu bestätigen, änderbar im Tab „Cài đặt".
-// ============================================================================
-
+// An Sushibar, Naumburg (Sachsen-Anhalt). 10:30–21:00, lễ đóng.
 import { parseIsoDate, weekdayKeyOf, type WeekdayKey } from "./demand";
 
 export type DayWindow = { startMinutes: number; endMinutes: number };
@@ -65,7 +59,7 @@ export function longestBlock(blocks: DayBlocks): number {
 const w = (start: number, end: number): DayWindow => ({ startMinutes: start, endMinutes: end });
 const copy = (blocks: DayBlocks): DayBlocks => blocks.map((b) => ({ ...b }));
 
-const CLOSED_SUNDAY: Record<WeekdayKey, boolean> = {
+const CLOSED_WEEKDAYS: Record<WeekdayKey, boolean> = {
   monday: false,
   tuesday: false,
   wednesday: false,
@@ -75,7 +69,7 @@ const CLOSED_SUNDAY: Record<WeekdayKey, boolean> = {
   sunday: false,
 };
 
-// An Sushibar: T2–T7 09:00–20:00, CN nghỉ.
+// An Sushibar: T2–CN 10:30–21:00, lễ đóng.
 const STUDIO_TAG: DayBlocks = [w(10 * 60 + 30, 21 * 60)];
 
 export const ANSUSHIBAR_WORK_HOURS: WorkHoursConfig = {
@@ -86,10 +80,10 @@ export const ANSUSHIBAR_WORK_HOURS: WorkHoursConfig = {
     thursday: copy(STUDIO_TAG),
     friday: copy(STUDIO_TAG),
     saturday: copy(STUDIO_TAG),
-    sunday: copy(STUDIO_TAG), // geschlossen, nur als Rückfall
+    sunday: copy(STUDIO_TAG),
   },
   holiday: copy(STUDIO_TAG), // wird durch holidayClosed nicht benutzt
-  closedWeekdays: { ...CLOSED_SUNDAY },
+  closedWeekdays: { ...CLOSED_WEEKDAYS },
   holidayClosed: true,
 };
 

@@ -436,6 +436,7 @@ export function useSchedule(storeId: string) {
         rules: storeConfig.staffingRules,
         weights: storeConfig.dayWeights,
         blockedDays,
+        adjacentShifts: [...latest.current.schedule.shifts, ...Object.values(latest.current.schedule.archive ?? {}).flatMap(entry => entry.shifts)],
         storeTag: storeConfig.id,
         seed: `${year}-${month}-${Date.now()}-${genNonce.current++}`,
       });

@@ -1,23 +1,20 @@
-// ============================================================================
-// Einstieg in die Dienstplan-Erstellung. Geplant wird ausschließlich über
-// Wochenverträge – die eigentliche Logik steht in weeklyScheduler.ts. Dieser
-// Wrapper hält die Signatur für den Hook und die Tests stabil.
-// ============================================================================
+// An Sushibar: bộ lập lịch riêng cho nhà hàng, không dùng quy tắc tiệm nail.
 
 import type { Employee, Shift } from "../types";
 import type { OverrideMap, WorkHoursConfig } from "./workHours";
 import type { StaffingRule } from "./staffing";
 import type { WeekdayKey } from "./demand";
-import { consecutiveRunLengthWith } from "./consecutive";
+import { isoAddDays, consecutiveRunLengthWith } from "./consecutive";
 import { datesOfMonth, parseIsoDate } from "./demand";
 import { weekStartOf } from "./weeks";
 import { publicHolidays } from "./holidays";
 import { resolveDay } from "./workHours";
 import { mayWorkOn } from "./availability";
 import { employeeForMonth } from "./history";
-import { generateWeeklySchedule, completeContractHours } from "./weeklyScheduler";
+import { generateWeeklySchedule, completeContractHours } from "./restaurantScheduler";
 
 export type GenerateInput = {
+  adjacentShifts?: readonly Shift[];
   year: number;
   month: number; // 1-basiert
   /** Arbeitszeit-Fenster je Wochentag + Feiertag. */
@@ -25,7 +22,7 @@ export type GenerateInput = {
   /** Ausnahmen für einzelne Daten (geschlossen / abweichende Zeiten). */
   overrides?: OverrideMap;
   employees: Employee[];
-  /** Feiertage als ISO-Set; Standard: Feiertage in Bayern des Jahres. */
+  /** Feiertage als ISO-Set; Standard: Feiertage in Sachsen-Anhalt des Jahres. */
   holidays?: Set<string>;
   /** Nicht verwendet (der Wochenplaner ist deterministisch); bleibt für die Signatur. */
   seed?: string;
@@ -47,7 +44,24 @@ function enforceRest(shifts: Shift[]): Shift[] {
  days.add(shift.date); worked.set(shift.employeeId, days); return true;
  });
 }
+export function boundaryRestDays(input: GenerateInput): Record<string, readonly string[]> {
+  const dates = datesOfMonth(input.year, input.month);
+  const blocked = { ...input.blockedDays };
+  for (const employee of input.employees) {
+    const worked = new Set((input.adjacentShifts ?? []).filter(s => s.employeeId === employee.id && !dates.includes(s.date)).map(s => s.date));
+    const rest = new Set(blocked[employee.id] ?? []);
+    for (const [edge, direction] of [[dates[0], -1], [dates[dates.length - 1], 1]] as const) {
+      let count = 0;
+      let cursor = isoAddDays(edge, direction);
+      while (worked.has(cursor)) { count++; cursor = isoAddDays(cursor, direction); }
+      if (count) rest.add(isoAddDays(edge, -direction * Math.max(0, 6 - count)));
+    }
+    blocked[employee.id] = [...rest];
+  }
+  return blocked;
+}
 export function generateSchedule(input: GenerateInput): Shift[] {
+  input = { ...input, blockedDays: boundaryRestDays(input) };
   const pair = input.employees.filter(e => ["ansushibar-5", "ansushibar-6"].includes(e.id)).sort((a,b) => a.id.localeCompare(b.id));
   if (pair.length !== 2) return completeContractHours(input, enforceRest(generateWeeklySchedule(input)));
   const blockedDays = { ...input.blockedDays };

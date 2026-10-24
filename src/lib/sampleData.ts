@@ -16,7 +16,6 @@ export function ansushibarEmployees(): Employee[] {
    ...makeEmployee(`ansushibar-${i + 5}`, name, "MINIJOB", 43),
    workRole: "BOTH",
    availableWeekdays: ["friday", "saturday", "sunday"],
-   preferredWindows: [{ days: ["friday", "saturday", "sunday"], startMinutes: 1050, endMinutes: 1170 }],
   })),
  ];
 }

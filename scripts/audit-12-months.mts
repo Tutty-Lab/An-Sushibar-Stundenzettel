@@ -18,7 +18,7 @@ const holidays = publicHolidays(year);
 const results: any[] = [];
 const all: Shift[] = [];
 for (let month = 1; month <= 12; month++) {
- const shifts = generateSchedule({ year, month, workHours: store.workHours, employees, rules: store.staffingRules, weights: store.dayWeights, storeTag: store.id });
+ const shifts = generateSchedule({ year, month, workHours: store.workHours, employees, rules: store.staffingRules, weights: store.dayWeights, storeTag: store.id, adjacentShifts: all });
  all.push(...shifts);
  const dates = datesOfMonth(year, month);
  const open = dates.filter(d => !resolveDay(store.workHours,d,holidays,{}).closed);
