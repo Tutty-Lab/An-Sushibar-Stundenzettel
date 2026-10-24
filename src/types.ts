@@ -1,0 +1,206 @@
+// ============================================================================
+// Zentrale Datentypen. Intern wird IMMER in Minuten (Integer) gerechnet,
+// niemals mit Fließkomma-Stunden.
+// ============================================================================
+
+import type { WeekdayKey } from "./lib/demand";
+import type { DateOverride, DayWindow, WorkHoursConfig } from "./lib/workHours";
+
+/**
+ * Anstellungsart. MINIJOB ist arbeitsrechtlich eine Form der Teilzeit und wird
+ * bei der Schichtplanung auch genauso behandelt – die Trennung dient der
+ * Belegschaftsstruktur und dem Stundenzettel, nicht der Planung selbst.
+ */
+export type EmploymentType = "VOLLZEIT" | "TEILZEIT" | "MINIJOB";
+
+export type ShiftType = "EARLY" | "LATE" | "CUSTOM";
+
+/** Lương & giờ mục tiêu của ĐÚNG một tháng (lịch sử, xem lib/history.ts). */
+export type PayrollRecord = {
+  month: string; // yyyy-MM
+  /** Lương tháng (€), nếu có. */
+  grossEuro?: number;
+  /** Lương giờ (€/h), nếu có. */
+  hourlyWage?: number;
+  /** Giờ mục tiêu xếp ca của tháng – KHÔNG phải giờ thực tế đã làm. */
+  convertedHours: number;
+  /** true = chủ nhập giờ trực tiếp; false/thiếu = tính Lương tháng ÷ Lương giờ. */
+  manualHours?: boolean;
+};
+
+/**
+ * Nghỉ một khoảng ngày (có thể qua nhiều tháng, VD 21.10.–21.11.).
+ * unpaid = nghỉ không lương; thiếu = Urlaub (nghỉ phép có lương).
+ * Cả hai: không xếp ca ngày nghỉ; giữ nguyên giờ mục tiêu tháng.
+ */
+export type Vacation = { start: string; end: string; unpaid?: boolean };
+
+/** „Khung giờ ưu tiên": an diesen Wochentagen möglichst in diesem Fenster arbeiten. */
+export type PreferredWindow = {
+  days: WeekdayKey[];
+  startMinutes: number;
+  endMinutes: number;
+};
+
+export type Employee = {
+  workRole?: "KITCHEN" | "SERVICE_SUSHI" | "BOTH";
+  isOwner?: boolean;
+  vacations?: Vacation[];
+  payrollRecords?: PayrollRecord[];
+  id: string;
+  name: string;
+  employmentType: EmploymentType;
+  /** Lương tháng hợp đồng chung (€). Minijob Bảo Ngọc: 630 €. */
+  monthlySalary?: number;
+  /** Lương giờ hợp đồng chung (€/h). */
+  hourlyWage?: number;
+  /**
+   * Monatliches Soll in Minuten (Integer). 176 h => 10560.
+   *
+   * Bei Viet Cuisine wird der Vertrag in WOCHENstunden angegeben (39 h/Woche
+   * = Vollzeit). Ist weeklyHours gesetzt, ist DAS die Quelle und targetMinutes
+   * wird je Monat daraus berechnet (siehe contract.ts). targetMinutes bleibt
+   * trotzdem befüllt, damit ältere gespeicherte Daten einen Wert haben.
+   */
+  targetMinutes: number;
+  /**
+   * Vertragliche WOCHENstunden. Gesetzt => targetMinutes wird je Monat daraus
+   * abgeleitet: Wochenstunden × (offene Tage des Monats ÷ 6 offene Tage/Woche).
+   * Sechs offene Tage, weil das Studio sonntags zu ist (Mo–Sa).
+   */
+  weeklyHours?: number;
+  /**
+   * Feste Schicht: diese Person arbeitet an ihren Arbeitstagen IMMER in genau
+   * diesem Zeitfenster (Viet Cuisine: eine Kraft nur 6:30–14:30, Vorbereitung
+   * ab vor Ladenöffnung). Gesetzt => der Scheduler legt für sie nur Dienste in
+   * diesem Fenster an, unabhängig von den Öffnungsblöcken.
+   */
+  fixedShift?: DayWindow;
+  /**
+   * Erster Arbeitstag als ISO-Datum "yyyy-MM-dd" (Eintritt/Vertragsbeginn).
+   *
+   * Gesetzt => Tage VOR diesem Datum sind gesperrt (kein Dienst) UND zählen
+   * nicht ins Monats-Soll. So wird ein Eintritt mitten im Monat korrekt
+   * abgebildet: die Person schuldet nur die Stunden ab ihrem Startdatum, statt
+   * als „zu wenig geplant" gemeldet zu werden. Fehlt = von Monatsanfang an dabei.
+   */
+  startDate?: string;
+  /**
+   * Letzter Arbeitstag (Austritt), ISO "yyyy-MM-dd". Danach wird niemand mehr
+   * eingeplant, und die Tage nach dem Austritt zählen nicht ins Monats-Soll –
+   * wer am 15. aufhört, bekommt für diesen Monat nur das halbe Soll und keine
+   * Warnung „zu wenig geplant". Fehlt = arbeitet weiter (kein Austritt).
+   */
+  endDate?: string;
+  /**
+   * Wochentage, an denen diese Person überhaupt eingeplant werden darf.
+   * Fehlt/leer = jeder Tag ist möglich (keine Einschränkung).
+   */
+  availableWeekdays?: WeekdayKey[];
+  /**
+   * Höchstzahl der Arbeitstage je Woche. Fehlt = nur die gesetzliche
+   * Sechs-Tage-Regel begrenzt.
+   */
+  maxDaysPerWeek?: number;
+  /**
+   * Muss diese Person an FEIERTAGEN im Dienst sein?
+   *
+   * Aus der Vorlage: einzelne Person, die an geöffneten Feiertagen im Dienst
+   * sein muss. King Nail hat an Feiertagen zu, deshalb derzeit ungenutzt.
+   * Gesetzt => der Scheduler plant sie an jedem geöffneten Feiertag ein, und
+   * die Prüfung meldet es, wenn sie doch fehlt.
+   */
+  requiredOnHolidays?: boolean;
+  /**
+   * Dieselbe PERSON in mehreren Filialen (bei King Nail derzeit niemand).
+   * Gleicher Schlüssel = gleicher Mensch; der Planer
+   * belegt dann keinen Tag doppelt, denn die Läden liegen weit auseinander.
+   */
+  personKey?: string;
+  /**
+   * „Độ dài ca" (weich, übernommen aus Thienlong/Shin Coco): bezahlte Stunden je
+   * Arbeitstag, z. B. 3–4 h. Der Planer bleibt darin, solange das Soll der
+   * Woche so erreichbar ist; sonst gilt die Standardlänge. Fehlt = Standard.
+   */
+  shiftHours?: { min: number; max: number };
+  /** „Rải đều trong tháng" (weich): mit „Độ dài ca" lieber mehr, dafür kürzere Arbeitstage. */
+  spreadEvenly?: boolean;
+  /**
+   * „Khung giờ ưu tiên" (weich): Wunsch-Tage und -Uhrzeiten. Ist mindestens ein
+   * Fenster gesetzt, kostet jede Arbeitsminute außerhalb einen Aufschlag – an
+   * Tagen ohne Fenster also der ganze Dienst. Besetzungsregeln gehen vor.
+   */
+  preferredWindows?: PreferredWindow[];
+};
+
+export type Shift = {
+  /** Explicit unpaid break, excluded from staffing coverage. */
+  pauseStartMinutes?: number;
+  id: string;
+  employeeId: string;
+  /** ISO-Datum "yyyy-MM-dd". */
+  date: string;
+  startMinutes: number;
+  endMinutes: number;
+  pauseMinutes: number;
+  /** Bezahlte Arbeitszeit in Minuten = presence - pause. */
+  paidMinutes: number;
+  shiftType: ShiftType;
+  /** true = automatisch generiert, false = manuell hinzugefügt/geändert. */
+  generated: boolean;
+  /**
+   * Giờ THỰC TẾ đã chấm công (phút, đã trừ nghỉ). Thiếu = chưa ghi nhận –
+   * giờ xếp lịch không bao giờ được coi là giờ thực tế.
+   */
+  actualMinutes?: number;
+};
+
+export type Schedule = {
+  historyVersion?: number;
+  companyName: string;
+  /** Anschrift des Betriebs (erscheint auf dem Stundenzettel). */
+  address: string;
+  year: number;
+  /** 1-basiert: 1 = Januar ... 12 = Dezember. */
+  month: number;
+  /** Arbeitszeit-Fenster (giờ làm) je Wochentag + Feiertag. */
+  workHours: WorkHoursConfig;
+  /** Ausnahmen für einzelne Daten (geschlossen / abweichende Zeiten). */
+  dateOverrides: DateOverride[];
+  employees: Employee[];
+  shifts: Shift[];
+  /**
+   * Zeitpunkt der ersten Wochen-Ausgabe (ISO). Gesetzt = der Monat ist
+   * gesperrt und darf nicht mehr geändert werden.
+   *
+   * Hintergrund: sobald eine Woche ausgedruckt im Laden hängt, muss der Stand
+   * im System exakt dem Papier entsprechen – bei einer Kontrolle wird genau
+   * das verglichen. Entsperren geht nur bewusst über die Oberfläche.
+   */
+  timesheetExports?: Record<string, { fingerprint: string; savedAt: string }>;
+  lockedAt?: string;
+  /** Bereits gedruckte Wochen, als ISO-Datum des jeweiligen Montags. */
+  printedWeeks?: string[];
+  /**
+   * Der Betrieb hat die Warnungen „chưa đủ giờ định mức" für DIESEN Plan
+   * bewusst hingenommen (Popup nach „Tạo lịch"). Ein neuer Plan setzt es zurück.
+   */
+  underQuotaAccepted?: boolean;
+  /**
+   * Gespeicherte Pläne ANDERER Monate, Schlüssel "yyyy-MM" (lib/monthArchive.ts).
+   * Beim Monatswechsel wird der aktuelle Plan hier abgelegt und der des
+   * Zielmonats (falls vorhanden) wieder geladen – kein Monat geht verloren.
+   */
+  archive?: Record<string, MonthArchive>;
+};
+
+/** Ein gespeicherter Monatsplan (mit Sperre und „Bỏ qua cảnh báo" dieses Monats). */
+export type MonthArchive = {
+  shifts: Shift[];
+  originalShifts: Shift[];
+  /** Zeitpunkt des Ablegens (ISO). */
+  savedAt: string;
+  lockedAt?: string;
+  printedWeeks?: string[];
+  underQuotaAccepted?: boolean;
+};
