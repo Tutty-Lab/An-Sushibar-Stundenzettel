@@ -723,7 +723,7 @@ function EmployeeSheet({
                         + Ngày vào làm / nghỉ việc <span className="text-slate-400">(nếu không làm cả tháng)</span>
                       </button>
                     ) : (
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                         {(
                           [
                             ["startDate", "Ngày vào làm", undefined, d.endDate || undefined],
@@ -744,7 +744,8 @@ function EmployeeSheet({
                             </FieldLabel>
                             <input
                               type="date"
-                              className={`${inputClass} w-full min-w-0`}
+                              aria-label={label}
+                              className={`${inputClass} employment-date-input block w-full min-w-0 max-w-full`}
                               value={d[key]}
                               min={min}
                               max={max}

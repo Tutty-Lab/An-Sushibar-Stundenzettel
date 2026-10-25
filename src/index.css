@@ -117,3 +117,20 @@ select {
     page-break-after: auto;
   }
 }
+
+/* Native date controls on mobile Safari otherwise retain an intrinsic width. */
+.employment-date-input {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.employment-date-input::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+.employment-date-input::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
+}
