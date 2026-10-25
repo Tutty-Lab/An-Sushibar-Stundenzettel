@@ -1,3 +1,4 @@
+import { RESTAURANT_POLICY } from "../lib/restaurantPolicy";
 import { effectiveShiftRole, roleLabel } from "../lib/shiftRoles";
 import { coverageSummary, type CoverageGap } from "../lib/coverage";
 import { isOnVacation } from "../lib/availability";
@@ -127,6 +128,7 @@ export function ScheduleTab({
     const stats = new Map<string, { people: Set<string>; shifts: number; total: number; early: number; late: number }>();
     for (const d of dates) stats.set(d, { people: new Set(), shifts: 0, total: 0, early: 0, late: 0 });
     for (const s of schedule.shifts) {
+      if (schedule.employees.find(e => e.id === s.employeeId)?.isOwner) continue;
       const st = stats.get(s.date);
       if (!st) continue;
       st.people.add(s.employeeId);
@@ -136,7 +138,7 @@ export function ScheduleTab({
       else st.late += 1; // LATE hoặc CUSTOM tính là ca tối
     }
     return stats;
-  }, [dates, schedule.shifts]);
+  }, [dates, schedule.shifts, schedule.employees]);
 
   // Chân bảng „ít nhất … người" je Besetzungsregel (wie Thienlong, ohne Bếp/Bồi):
   // dieselben Zahlen, die auch die Prüfung benutzt – Tag → Label → Spannen.
@@ -157,10 +159,11 @@ export function ScheduleTab({
     const holidays = publicHolidays(schedule.year);
     const ovMap = Object.fromEntries(schedule.dateOverrides.map((o) => [o.date, o]));
     const nameOf = new Map(schedule.employees.map((e) => [e.id, e.name.trim().split(/\s+/).pop() ?? e.name]));
+    const ownerIds = new Set(schedule.employees.filter(e => e.isOwner).map(e => e.id));
     const result = new Map<string, { open: string; close: string; windows: Map<string, ReturnType<typeof coverageSummary>> }>();
     for (const d of dates) {
       const day = resolveDay(schedule.workHours, d, holidays, ovMap);
-      const dayShifts = schedule.shifts.filter((s) => s.date === d);
+      const dayShifts = schedule.shifts.filter((s) => s.date === d && !ownerIds.has(s.employeeId));
       const windows = new Map<string, ReturnType<typeof coverageSummary>>();
       if (day.closed) {
         result.set(d, { open: "–", close: "–", windows });
@@ -253,6 +256,8 @@ export function ScheduleTab({
 
       {mode === "schedule" && schedule.shifts.length > 0 && <StaffingReport analysis={store.analysis} />}
 
+      {mode === "schedule" && <p className="mb-3 rounded bg-sky-50 px-3 py-2 text-sm text-sky-900">Chủ hỗ trợ suốt giờ mở cửa, mỗi lúc một vị trí Bếp hoặc Bồi; debug chỉ tính nhân viên, không tính chủ. Không tính giờ hợp đồng hay chấm công.</p>}
+
       {/* Lỗi kiểm tra */}
       {mode === "schedule" && !validation.valid && schedule.shifts.length > 0 && (
         <div className="mb-3 rounded bg-rose-50 border border-rose-200 text-rose-700 text-sm px-3 py-2">
@@ -341,11 +346,6 @@ export function ScheduleTab({
                 const sum = summaryByEmp.get(emp.id);
                 const sollMin = monthlyTargetMinutesFor(emp, openDates, schedule.workHours);
                 const diff = sum?.diffMinutes ?? -sollMin;
-                // Chủ tiệm: không có hợp đồng và không tính giờ lương (paidMinutes = 0,
-                // owner.ts) – chỉ hiện số giờ có mặt.
-                const ownerMinutes = emp.isOwner
-                  ? schedule.shifts.filter((s) => s.employeeId === emp.id).reduce((t, s) => t + s.endMinutes - s.startMinutes, 0)
-                  : 0;
                 return (
                   <tr key={emp.id} className="hover:bg-slate-50/50">
                     {/* Nur der Name (gekürzt); Art und Soll stehen im Tab Nhân viên – so passen mehr Tage auf den Schirm. */}
@@ -361,16 +361,16 @@ export function ScheduleTab({
                       return (
                         <td
                           key={d}
-                          onClick={() => setSelected({ employeeId: emp.id, date: d })}
+                          onClick={() => { if (!emp.isOwner) setSelected({ employeeId: emp.id, date: d }); }}
                           className={`border-b border-l border-slate-200 px-0.5 py-1 text-center cursor-pointer align-middle ${cellClass(
                             shift,
                           )}`}
-                          title="Bấm để sửa"
+                          title={emp.isOwner ? "Chủ hỗ trợ suốt giờ mở cửa; mỗi lúc một vị trí; không tính giờ hợp đồng" : "Bấm để sửa"}
                         >
                           {shift ? (
                             // Kurz: „11:30–15" / „17–22" je Dienst untereinander.
                             <div className="leading-tight whitespace-nowrap text-[10px] font-medium">
-                              {dienste.map((x) => (
+                              {(emp.isOwner ? resolveDay(schedule.workHours, d, publicHolidays(schedule.year), Object.fromEntries(schedule.dateOverrides.map(o => [o.date,o]))).blocks.map((block,i) => ({...shift,...block,id:`owner-display-${d}-${i}`,assignedRole:undefined})) : dienste).map((x) => (
                                 <div key={x.id}>
                                   {shortTime(x.startMinutes)}–{shortTime(x.endMinutes)}
                                   {x.assignedRole && <div className="font-normal text-slate-600">{roleLabel(x.assignedRole)}</div>}
@@ -383,8 +383,9 @@ export function ScheduleTab({
                         </td>
                       );
                     })}
+                    {emp.isOwner ? <td colSpan={2} className="border-b border-l border-slate-200 px-2 py-1 text-center text-[10px] text-slate-500">Không tính lương</td> : <>
                     <td className="border-b border-l border-slate-200 px-2 py-1 text-right font-medium">
-                      {minutesToShortHours(emp.isOwner ? ownerMinutes : sum?.assignedMinutes ?? 0)}
+                      {minutesToShortHours(sum?.assignedMinutes ?? 0)}
                     </td>
                     <td
                       className={`border-b border-l border-slate-200 px-2 py-1 text-right font-medium ${
@@ -395,6 +396,7 @@ export function ScheduleTab({
                     >
                       {emp.isOwner ? "—" : Math.abs(diff) <= SCHEDULE_SLOT_MINUTES / 2 ? "≈0,0" : signedHours(diff)}
                     </td>
+                    </>}
                   </tr>
                 );
               })}
@@ -420,13 +422,12 @@ export function ScheduleTab({
               <SummaryRow label="Ca chiều" dates={gridDates} value={(d) => String(dayStats.get(d)!.late)} />
               {(
                 <>
-                  <SummaryRow label="Mở 10:30" dates={gridDates} value={(d) => debugStats.get(d)?.open ?? "–"} />
-                  <SummaryRow label="Đóng 21:00" dates={gridDates} value={(d) => debugStats.get(d)?.close ?? "–"} />
-                  {DEBUG_WINDOWS.map((w) => (
+                  {schedule.shifts.length > 0 && DEBUG_WINDOWS.map((w) => (
                     <MinPeopleRow
                       key={w.key}
                       label={w.label}
-                      title={`Số người ít nhất có mặt ${w.label} (đã trừ giờ nghỉ)`}
+                      title={`${w.label}: số người ít nhất có mặt, đã trừ giờ nghỉ. Vàng = thiếu người; rê chuột để xem khung giờ và số người thiếu.`}
+                      required={"group" in w ? 1 : w.key === "peak" ? 3 : 2}
                       dates={gridDates}
                       gaps={(d) => debugStats.get(d)?.windows.get(w.key)?.gaps ?? []}
                       value={(d) => debugStats.get(d)?.windows.get(w.key)?.minimum ?? null}
@@ -454,43 +455,42 @@ export function ScheduleTab({
 }
 
 /** Các khung kiểm tra của nhà hàng, gồm cao điểm mỗi ngày. */
-const DEBUG_WINDOWS = [
-  { key: "all", label: "Ít nhất cả ngày", from: 630, to: 1260 },
-  { key: "am", label: "Ít nhất 10:30–12", from: 630, to: 720 },
-  { key: "noon", label: "Ít nhất 12–14", from: 720, to: 840 },
-  { key: "pm", label: "Ít nhất 14–17:30", from: 840, to: 1050 },
-  { key: "peak", label: "Ít nhất 17:30–19:30", from: 1050, to: 1170 },
-  { key: "eve", label: "Ít nhất 19:30–21", from: 1170, to: 1260 },
-  { key: "kitchen", label: "Bếp ít nhất cả ngày", from: 630, to: 1260, group: "KITCHEN" },
-  { key: "service", label: "Bồi ít nhất cả ngày", from: 630, to: 1260, group: "SERVICE_SUSHI" },
-  { key: "kitchen-peak", label: "Bếp 17:30–19:30", from: 1050, to: 1170, group: "KITCHEN" },
-  { key: "service-peak", label: "Bồi 17:30–19:30", from: 1050, to: 1170, group: "SERVICE_SUSHI" },
+const { opening, peak } = RESTAURANT_POLICY;
+const GROUP_RANGES = [
+  ["normal", `${minutesToTime(opening.startMinutes)}–${minutesToTime(peak.startMinutes)}`, opening.startMinutes, peak.startMinutes],
+  ["peak", `${minutesToTime(peak.startMinutes)}–${minutesToTime(peak.endMinutes)}`, peak.startMinutes, peak.endMinutes],
+  ["closing", `${minutesToTime(peak.endMinutes)}–${minutesToTime(opening.endMinutes)}`, peak.endMinutes, opening.endMinutes],
 ] as const;
+const DEBUG_WINDOWS = [
+  { key: "peak", label: `Cao điểm ${minutesToTime(peak.startMinutes)}–${minutesToTime(peak.endMinutes)}`, from: peak.startMinutes, to: peak.endMinutes },
+  ...(["KITCHEN", "SERVICE_SUSHI"] as const).flatMap(group => GROUP_RANGES.map(([key, range, from, to]) => ({
+    key: `${group}-${key}`, label: `${group === "KITCHEN" ? "Bếp" : "Bồi"} ${range}`, group, from, to,
+  }))),
+];
 
-/** Số người ít nhất: 0 = đỏ (tiệm trống), 1 = vàng. */
-function MinPeopleRow({ label, title, dates, value, gaps }: {
+/** Lemon layout: one number per cell; shortage intervals stay in the tooltip. */
+function MinPeopleRow({ label, title, dates, value, gaps, required }: {
   label: string;
   title: string;
   dates: string[];
   value: (d: string) => number | null;
   gaps: (d: string) => CoverageGap[];
+  required: number;
 }) {
   return (
     <tr className="bg-slate-50 text-slate-600">
       <td title={title}
-        className="sticky left-0 z-10 bg-slate-50 border-t border-r border-slate-200 px-1.5 py-1 font-medium w-[80px] max-w-[80px] text-[10px] leading-tight">
+        className={`sticky left-0 z-10 bg-slate-50 border-t border-r border-slate-200 px-1.5 py-1 font-medium w-[80px] max-w-[80px] text-[10px] leading-tight whitespace-nowrap ${label.startsWith("Bếp") ? "text-orange-700" : label.startsWith("Bồi") ? "text-sky-700" : ""}`}>
         {label}
       </td>
       {dates.map((d) => {
         const n = value(d);
         const missing = gaps(d);
-        const tone = n == null ? "text-slate-300" : missing.length ? n === 0 ? "bg-rose-50 text-rose-700 font-semibold" : "bg-amber-50 text-amber-800" : "";
-        return <td key={d} className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>
-          <div>{n ?? "–"}</div>
-          {missing.length > 0 && <div className="text-[10px] font-medium">{d.slice(8)}/{d.slice(5,7)}</div>}
-          {missing.map(gap => <div key={gap.startMinutes} className="mt-0.5 text-[10px] leading-tight text-rose-700 whitespace-nowrap">
-            {minutesToTime(gap.startMinutes)}–{minutesToTime(gap.endMinutes)}<br />còn {gap.count} người
-          </div>)}
+        const tone = n == null ? "text-slate-300" : missing.length ? "bg-yellow-50 text-yellow-700 font-semibold" : "";
+        const detail = missing.map(gap => `${minutesToTime(gap.startMinutes)}–${minutesToTime(gap.endMinutes)}: thiếu ${Math.max(0, required-gap.count)} người`).join("; ");
+        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n} người · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
+          className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>
+          {n ?? "–"}
         </td>;
       })}
       <td className="border-t border-l border-slate-200" />

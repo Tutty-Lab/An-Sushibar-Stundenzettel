@@ -8,8 +8,9 @@ export const RESTAURANT_POLICY = {
  peakStaff: 3,
  // Trọng số tối ưu, không phải số giờ hợp đồng hoặc giới hạn pháp lý.
  emptyMinuteCost: 200000,
- missingRoleMinuteCost: 20000,
- peakMissingMinuteCost: 10000,
+ // Minimum department coverage takes priority over the extra peak person.
+ missingRoleMinuteCost: 200000,
+ peakMissingMinuteCost: 50000,
  balanceHourCost: 1500,
 } as const;
 

@@ -1,6 +1,4 @@
 import { useMemo, useState } from "react";
-import { PayrollHistory } from "./PayrollHistory";
-import { MINDESTLOHN_2026, hoursFromPay, recordHours } from "../lib/payRecord";
 import type { UseScheduleReturn } from "../hooks/useSchedule";
 import type { Employee, EmploymentType } from "../types";
 import { splitTargetHours } from "../lib/splitTargetHours";
@@ -53,7 +51,7 @@ function splitInfo(targetHours: number, type: EmploymentType): { ok: boolean; te
  * Feld leeren kann, ohne dass es auf 0 zurückspringt. Aufbau wie in der
  * Thienlong-App: Thông tin · Giờ làm · Ngày nghỉ cố định · Luật riêng.
  */
-type Draft = {
+export type Draft = {
   workRole: NonNullable<Employee["workRole"]>;
   /** Urlaub (nghỉ phép): an diesen Tagen kein Dienst. */
   vacations: NonNullable<Employee["vacations"]>;
@@ -63,9 +61,6 @@ type Draft = {
   unit: "week" | "month";
   /** Stunden zur gewählten Einheit, als Text – „40,2" mit Komma ist erlaubt. */
   hours: string;
-  /** Lương tháng (€) và lương giờ (€/h) – text, "" = chưa nhập. */
-  salary: string;
-  wage: string;
   /** „Số ngày làm / tuần": "" = tự động, sonst 1..6 (maxDaysPerWeek). */
   maxDays: string;
   /** „Ngày nghỉ cố định" – die Kehrseite von availableWeekdays. */
@@ -91,7 +86,7 @@ type OtherStore = { storeId: string; shortName: string; employees: readonly Empl
 const hoursText = (n: number) => String(n).replace(".", ",");
 const parseHours = (text: string) => Number(text.trim().replace(",", "."));
 
-function draftFrom(emp?: Employee, partners: PartnerChoice = {}): Draft {
+export function draftFrom(emp?: Employee, partners: PartnerChoice = {}): Draft {
   const available = emp?.availableWeekdays;
   return {
     vacations: emp?.vacations?.map((v) => ({ ...v })) ?? [],
@@ -99,8 +94,6 @@ function draftFrom(emp?: Employee, partners: PartnerChoice = {}): Draft {
     workRole: emp?.workRole ?? "BOTH",
     employmentType: emp?.employmentType ?? "VOLLZEIT",
     unit: emp?.weeklyHours != null ? "week" : "month",
-    salary: emp?.monthlySalary != null ? hoursText(emp.monthlySalary) : "",
-    wage: emp?.hourlyWage != null ? hoursText(emp.hourlyWage) : emp ? "" : hoursText(MINDESTLOHN_2026),
     hours: emp ? hoursText(emp.weeklyHours ?? Math.round((emp.targetMinutes / 60) * 100) / 100) : "169",
     maxDays: emp?.maxDaysPerWeek ? String(Math.min(6, emp.maxDaysPerWeek)) : "",
     daysOff: available && available.length > 0 ? WEEKDAY_ORDER.filter((day) => !available.includes(day)) : [],
@@ -155,14 +148,30 @@ function windowsFromDraft(d: Draft): Employee["preferredWindows"] {
   return out.length > 0 ? out : undefined;
 }
 
-/** Có cả lương tháng và lương giờ -> tự điền giờ/tháng. */
-function withPayHours(d: Draft): Draft {
-  const h = hoursFromPay(parseHours(d.salary), parseHours(d.wage));
-  return h == null ? d : { ...d, unit: "month", hours: hoursText(h) };
+/** Reject invalid edits explicitly rather than silently dropping input. */
+export function draftErrors(d: Draft): string[] {
+  const errors: string[] = [];
+  if (!d.name.trim()) errors.push("Nhập tên nhân viên.");
+  const hours = parseHours(d.hours);
+  if (!d.hours.trim() || !Number.isFinite(hours) || hours < 0) errors.push("Giờ hợp đồng phải là số từ 0 trở lên.");
+  if (d.maxDays && (!Number.isInteger(Number(d.maxDays)) || Number(d.maxDays) < 1 || Number(d.maxDays) > 6)) errors.push("Số ngày làm mỗi tuần phải từ 1 đến 6.");
+  if (d.daysOff.length === 7) errors.push("Không thể chọn nghỉ cả 7 ngày.");
+  if (d.startDate && d.endDate && d.endDate < d.startDate) errors.push("Ngày nghỉ việc phải từ ngày vào làm trở đi.");
+  if (d.vacations.some(v=>!v.start || !v.end || v.end < v.start)) errors.push("Điền đủ ngày nghỉ phép, ngày kết thúc không trước ngày bắt đầu.");
+  if (d.shiftMin || d.shiftMax) {
+    const min=parseHours(d.shiftMin), max=parseHours(d.shiftMax);
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min < 3 || max > 8 || max < min) errors.push("Độ dài ca cần đủ hai số, từ 3 đến 8 giờ, từ nhỏ đến lớn.");
+  }
+  const validTime=(start:string,end:string)=>{try{return timeToMinutes(end)>timeToMinutes(start);}catch{return false;}};
+  if(d.fixed && !validTime(d.fixedStart,d.fixedEnd)) errors.push("Ca cố định cần giờ kết thúc sau giờ bắt đầu.");
+  if(d.windows.some(w=>!w.days.length || !validTime(w.start,w.end))) errors.push("Mỗi khung ưu tiên cần chọn ngày, giờ kết thúc sau giờ bắt đầu.");
+  return errors;
 }
 
 /** Entwurf -> Mitarbeiter-Felder (ohne id). */
-function draftToEmployee(d: Draft): Omit<Employee, "id"> {
+export function draftToEmployee(d: Draft): Omit<Employee, "id"> {
+  const errors = draftErrors(d);
+  if (errors.length) throw new Error(errors.join(" "));
   const hours = Math.max(0, parseHours(d.hours) || 0);
   const tage = Number(d.maxDays);
   const fixedStart = safeMinutes(d.fixedStart, FIXED_START_DEFAULT);
@@ -176,8 +185,6 @@ function draftToEmployee(d: Draft): Omit<Employee, "id"> {
     // Monatsvertrag: die Stunden stehen direkt im Soll. Wochenvertrag: das
     // Monats-Soll wird je Monat daraus abgeleitet (contract.ts).
     targetMinutes: d.unit === "month" ? Math.round(hours * 60) : 0,
-    monthlySalary: parseHours(d.salary) > 0 ? parseHours(d.salary) : undefined,
-    hourlyWage: parseHours(d.wage) > 0 ? parseHours(d.wage) : undefined,
     weeklyHours: d.unit === "week" ? hours : undefined,
     // Ende muss nach Beginn liegen – sonst die feste Schicht ignorieren, statt
     // eine kaputte Zeitspanne zu speichern.
@@ -289,7 +296,7 @@ export function EmployeesTab({ store, allStores }: { store: UseScheduleReturn; a
         </ul>
       )}
 
-      <PayrollHistory store={store} />
+
 
       {!locked && (
         <button
@@ -349,7 +356,6 @@ function EmployeeSummaryRow({
 }) {
   const monatMin = monthlyTargetMinutesFor(emp, openDates, workHours);
   // Giờ của tháng này theo bảng lương (history.ts) thay cho hợp đồng chung.
-  const record = emp.payrollRecords?.find((r) => r.month === openDates[0]?.slice(0, 7));
   const monatH = monatMin / 60;
   const info = splitInfo(monatH, emp.employmentType);
   const ownRange = ownShiftRangeMinutes(emp);
@@ -363,7 +369,7 @@ function EmployeeSummaryRow({
           <span className="shrink-0 rounded bg-amber-50 text-amber-800 text-[11px] px-1.5 py-0.5">Chủ tiệm</span>
         </div>
         <div className="mt-0.5 text-xs text-slate-500">
-          Thỉnh thoảng làm dịch vụ · thêm ca tay ở tab Lịch khi cần · không tính giờ hợp đồng
+          Có mặt suốt giờ mở cửa · hỗ trợ Bếp/Bồi, mỗi lúc một vị trí · không tính giờ hợp đồng
         </div>
       </div>
     );
@@ -379,9 +385,7 @@ function EmployeeSummaryRow({
       </div>
       <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
         <span>
-          {record
-            ? `${recordHours(record).toLocaleString("de-DE", { minimumFractionDigits: 2 })}h tháng này (đã lưu theo tháng)`
-            : emp.weeklyHours != null
+          {emp.weeklyHours != null
             ? `${emp.weeklyHours}h/tuần`
             : `${String(Math.round((emp.targetMinutes / 60) * 100) / 100).replace(".", ",")}h/tháng`}{" "}
           · {monatH > 0 ? `${minutesToShortHours(monatMin)} · ` : ""}
@@ -593,8 +597,10 @@ function EmployeeSheet({
     list.includes(day) ? list.filter((x) => x !== day) : [...list, day];
 
   // Mit den übrigen Feldern der Person (Lohnabrechnung je Monat bleibt erhalten).
-  const monatMin = monthlyTargetMinutesFor({ ...employee, ...draftToEmployee(d), id: employee?.id ?? "preview" }, openDates, workHours);
-  const vacationBad = d.vacations.some((v) => !v.start || !v.end || v.end < v.start);
+  const preview = { ...employee, targetMinutes: Math.max(0, parseHours(d.hours) || 0)*60, weeklyHours: d.unit === "week" ? Math.max(0,parseHours(d.hours)||0) : undefined, payrollRecords: undefined, id: employee?.id ?? "preview" } as Employee;
+  const monatMin = monthlyTargetMinutesFor(preview, openDates, workHours);
+  const errors = draftErrors(d);
+  const vacationBad = d.vacations.some(v=>!v.start || !v.end || v.end < v.start);
   const info = splitInfo(monatMin / 60, d.employmentType);
   const shiftMinH = parseHours(d.shiftMin);
   const shiftMaxH = parseHours(d.shiftMax);
@@ -660,21 +666,6 @@ function EmployeeSheet({
                 ]}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <FieldLabel>Lương tháng (€)</FieldLabel>
-                <HoursInput value={d.salary} placeholder="VD 630" unit="€"
-                  onChange={(v) => setD((prev) => withPayHours({ ...prev, salary: v }))} />
-              </label>
-              <label className="block">
-                <FieldLabel>Lương giờ (€/h)</FieldLabel>
-                <HoursInput value={d.wage} placeholder="VD 13,90" unit="€/h"
-                  onChange={(v) => setD((prev) => withPayHours({ ...prev, wage: v }))} />
-              </label>
-            </div>
-            <p className="-mt-1 text-xs text-slate-500">
-              Nhập cả lương tháng và lương giờ thì giờ mục tiêu = lương tháng ÷ lương giờ. Muốn số khác thì sửa thẳng ô giờ bên dưới.
-            </p>
             <div>
               <FieldLabel hint={`tháng này ≈ ${minutesToShortHours(monatMin)} · ${info.text}`}>
                 {d.unit === "week" ? "Giờ / tuần" : "Giờ / tháng"}
@@ -765,7 +756,7 @@ function EmployeeSheet({
                   <SheetSection title="Nghỉ phép / nghỉ không lương">
                     <p className="text-xs text-slate-500">
                       Không xếp ca trong khoảng này (gồm cả ngày đầu và cuối), được phép kéo qua nhiều tháng (VD 21.10.–21.11.).
-                      Giờ mục tiêu mỗi tháng tự giảm theo số ngày mở cửa bị nghỉ trong tháng đó.
+                      Ngày nghỉ sẽ không được xếp ca; giờ hợp đồng tháng giữ nguyên.
                     </p>
                     {d.vacations.map((v, i) => (
                       <div key={i} className="flex flex-wrap items-end gap-2">
@@ -801,7 +792,7 @@ function EmployeeSheet({
                       {d.daysOff.length === 0
                         ? "Không chọn = làm được mọi ngày tiệm mở. Ngày tiệm đóng cửa thì không cần chọn."
                         : d.daysOff.length === 7
-                          ? "Không thể nghỉ cả 7 ngày — sẽ không lưu ngày nghỉ cố định."
+                          ? "Không thể nghỉ cả 7 ngày — hãy chọn tối đa 6 ngày."
                           : `Không xếp ca vào ${WEEKDAY_ORDER.filter((x) => d.daysOff.includes(x)).map((x) => WEEKDAY_SHORT_VI[x]).join(", ")}.`}
                     </p>
                   </SheetSection>
@@ -848,7 +839,7 @@ function EmployeeSheet({
                       </div>
                       {shiftRangeOff && (
                         <p className="mt-1 text-xs text-amber-700">
-                          Nhập cả hai ô, trong khoảng 3–8 h (luật tiệm). Ngoài khoảng đó app tự làm tròn vào 3–8 h.
+                          Nhập cả hai ô, trong khoảng 3–8 h (luật tiệm). Giờ kết thúc không được nhỏ hơn giờ bắt đầu.
                         </p>
                       )}
                     </div>
@@ -992,6 +983,7 @@ function EmployeeSheet({
         </div>
 
         <div className="border-t border-slate-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {errors.length > 0 && <ul role="alert" className="mb-2 text-xs text-rose-700 list-disc pl-4">{errors.map(error=><li key={error}>{error}</li>)}</ul>}
           {loeschFrage ? (
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm text-slate-600">Xoá nhân viên này?</span>
@@ -1028,7 +1020,7 @@ function EmployeeSheet({
               </button>
               <button
                 onClick={() => onSave(draftToEmployee(d), d.partners)}
-                disabled={d.name.trim().length === 0 || vacationBad}
+                disabled={errors.length > 0}
                 className="rounded-lg bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-40"
               >
                 Lưu

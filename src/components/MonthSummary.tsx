@@ -9,7 +9,7 @@ import { minutesToShortHours } from "../lib/time";
  */
 export function MonthSummary({ store }: { store: UseScheduleReturn }) {
   const { schedule, activeEmployees, openDates } = store;
-  const rows = activeEmployees.map((e) => {
+  const rows = activeEmployees.filter(e => !e.isOwner).map((e) => {
     const shifts = schedule.shifts.filter((s) => s.employeeId === e.id);
     const recorded = shifts.filter((s) => s.actualMinutes != null);
     return {

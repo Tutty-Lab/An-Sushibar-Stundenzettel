@@ -697,6 +697,9 @@ function tradeMinutes(
               const rest = current.filter(
                 (s) => !(s.employeeId === person.id && (s.date === needy || s.date === quelle)),
               );
+              const worked = new Set(rest.filter(s => s.employeeId === person.id).map(s => s.date));
+              if (abgeben - menge > 0) worked.add(quelle);
+              if (consecutiveRunLengthWith(worked, needy) > 6) continue;
               const vorher = costOf(current, needy) + costOf(current, quelle);
               const mehr = placePair(needy, person, aufTag + menge, person, 0, rest.filter((s) => s.date === needy));
               const weniger = placePair(quelle, person, abgeben - menge, person, 0, rest.filter((s) => s.date === quelle));
@@ -930,8 +933,10 @@ export function generateWeeklySchedule(input: WeeklyInput, existing: Shift[] = [
   const weekInfo = [...byWeek].map(([weekStart, weekDates]) => ({ weekStart, openDays: weekDates.length }));
   const weeks = [...byWeek].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
   const typeRank = (employee: Employee) => employee.employmentType === "VOLLZEIT" ? 0 : employee.employmentType === "TEILZEIT" ? 1 : 2;
+  // Place constrained availability first, so regular staff can cover around it.
+  const availableCount = (employee: Employee) => openDates.filter(date => mayWorkOn(employee,date) && !ctx.blocked.get(employee.id)?.has(date)).length;
   const employees = [...input.employees].sort((a, b) =>
-    Number(Boolean(b.fixedShift)) - Number(Boolean(a.fixedShift)) || typeRank(a) - typeRank(b) || a.id.localeCompare(b.id),
+    Number(Boolean(b.fixedShift)) - Number(Boolean(a.fixedShift)) || availableCount(a) - availableCount(b) || typeRank(a) - typeRank(b) || a.id.localeCompare(b.id),
   );
   let result = [...existing];
   const monthDates = [...days.keys()];
@@ -1108,6 +1113,7 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
   date=>openMinutesOfBlocks(days.get(date)!.blocks),ctx.weights,
   date=>minimumStaffHours(days.get(date)!.blocks,effectiveWeekdayKey(date,holidays),ctx.rules),
   date=>openMinutesOfBlocks(days.get(date)!.blocks)/60);
+ const rebalance = () => {
  for(let pass=0;pass<100;pass++) {
   const totals=new Map(openDates.map(date=>[date,result.filter(s=>s.date===date).reduce((n,s)=>n+s.paidMinutes,0)/60]));
   const delta=(date:string)=>(totals.get(date) ?? 0)-(balancedTargets.get(date) ?? 0);
@@ -1115,6 +1121,7 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
   const gaps = new Map(openDates.map(date=>[date,roleGapMinutes(result.filter(s=>s.date===date),days.get(date)!.blocks,ctx)]));
   const receivers=[...openDates].sort((a,b)=>(gaps.get(b)!-gaps.get(a)!) || delta(a)-delta(b)).slice(0,8);
   let best: {result:Shift[];gain:number} | undefined;
+  const placementCache=new Map<string,Shift[]|undefined>();
   for(const from of donors) for(const to of receivers) {
    if(from===to || (delta(from)-delta(to)<0.75 && !gaps.get(to))) continue;
    for(const employee of employees) {
@@ -1131,19 +1138,27 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
     if(!worked.has(to) && [...worked].filter(date=>weekStartOf(date)===weekStartOf(to)).length>=dayLimit(employee)) continue;
     const rest=result.filter(s=>!source.includes(s)&&!dest.includes(s));
     const place=(date:string,paid:number):Shift[]|undefined=>{
-     if(!paid) return [];
+     const key=`${employee.id}:${date}:${paid}`;
+     if(placementCache.has(key)) return placementCache.get(key);
      const day=days.get(date)!, weekday=effectiveWeekdayKey(date,holidays);
      const others=rest.filter(s=>s.date===date);
+     const colleague=employees.find(e=>e.id!==employee.id && !e.fixedShift && e.workRole===employee.workRole && others.some(s=>s.employeeId===e.id));
+     const otherPaid=colleague ? others.filter(s=>s.employeeId===colleague.id).reduce((n,s)=>n+s.paidMinutes,0) : 0;
+     const untouched=colleague ? others.filter(s=>s.employeeId!==colleague.id) : others;
+     const colleagueOptions=colleague ? optionsFor(colleague,date,otherPaid,day.blocks,true,weekday,ctx) : [{shifts:[],styleCost:0}];
+     const ownOptions=paid ? optionsFor(employee,date,paid,day.blocks,true,weekday,ctx) : [{shifts:[],styleCost:0}];
      let chosen:Shift[]|undefined, cost=Infinity;
-     for(const option of optionsFor(employee,date,paid,day.blocks,true,weekday,ctx)) {
-      const next=dayCost([...others,...option.shifts],day.blocks,weekday,balancedTargets.get(date),ctx);
-      if(next<cost) {cost=next;chosen=option.shifts;}
+     for(const option of ownOptions) for(const other of colleagueOptions) {
+      const shifts=[...untouched,...option.shifts,...other.shifts];
+      const next=dayCost(shifts,day.blocks,weekday,balancedTargets.get(date),ctx);
+      if(next<cost) {cost=next;chosen=shifts;}
      }
+     placementCache.set(key,chosen);
      return chosen;
     };
     const nextSource=place(from,sourcePaid-amount), nextDest=place(to,destPaid+amount);
     if(!nextSource || !nextDest) continue;
-    const next=[...rest,...nextSource,...nextDest];
+    const next=[...rest.filter(s=>s.date!==from && s.date!==to),...nextSource,...nextDest];
     const score=(list:Shift[])=>[from,to].reduce((n,date)=>{
       const onDay=list.filter(s=>s.date===date), day=days.get(date)!;
       return n+dayCost(onDay,day.blocks,effectiveWeekdayKey(date,holidays),balancedTargets.get(date),ctx)
@@ -1157,6 +1172,11 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
   if(!best) break;
   result=best.result;
  }
+ };
+ rebalance();
+ result = relocateRestDays(result,employees,days,holidays,balancedTargets,ctx);
+ rebalance();
+ result = exchangeRoleHours(result,employees,days,holidays,balancedTargets,ctx);
  result = polishRestaurantPairs(result,employees,days,holidays,balancedTargets,ctx);
  return improveCoverage(result,employees,days,holidays,balancedTargets,ctx).sort((a,b)=>a.date.localeCompare(b.date)||a.startMinutes-b.startMinutes||a.employeeId.localeCompare(b.employeeId));
 }
@@ -1173,7 +1193,6 @@ function polishRestaurantPairs(result: Shift[], employees: Employee[], days: Map
    const active=employees.filter(e=>!e.fixedShift && onDay.some(s=>s.employeeId===e.id));
    for(let i=0;i<active.length;i++) for(let j=i+1;j<active.length;j++) {
     const a=active[i],b=active[j];
-    if(a.workRole!==b.workRole && a.workRole!=="BOTH" && b.workRole!=="BOTH") continue;
     const ownA=onDay.filter(s=>s.employeeId===a.id),ownB=onDay.filter(s=>s.employeeId===b.id);
     const rest=onDay.filter(s=>s.employeeId!==a.id && s.employeeId!==b.id);
     const options=(employee:Employee,own:Shift[])=>[
@@ -1193,4 +1212,126 @@ function polishRestaurantPairs(result: Shift[], employees: Employee[], days: Map
   output.push(...onDay);
  }
  return output;
+}
+
+/** Exchange hours on two dates together: preserve both contracts and daily totals.
+ * A one-person move cannot repair a long shift's uncovered break when another
+ * employee must receive those hours on the same day. */
+function exchangeRoleHours(result: Shift[], employees: Employee[], days: Map<string, Day>, holidays: Set<string>, targets: Map<string, number>, ctx: Ctx): Shift[] {
+ const dates=[...days].filter(([,day])=>!day.closed).map(([date])=>date);
+ for(let pass=0;pass<20;pass++) {
+  let best: {shifts:Shift[];gain:number} | undefined;
+  for(let i=0;i<employees.length;i++) for(let j=i+1;j<employees.length;j++) {
+   const a=employees[i],b=employees[j];
+   if(a.fixedShift || b.fixedShift || a.weeklyHours!=null || b.weeklyHours!=null || a.workRole!==b.workRole || a.workRole==="BOTH") continue;
+   const candidates=new Map<number,{date:string;shifts:Shift[];gain:number}[]>();
+   for(const date of dates) {
+    const day=days.get(date)!,weekday=effectiveWeekdayKey(date,holidays);
+    const onDay=result.filter(s=>s.date===date);
+    const ownA=onDay.filter(s=>s.employeeId===a.id),ownB=onDay.filter(s=>s.employeeId===b.id);
+    const paidA=ownA.reduce((n,s)=>n+s.paidMinutes,0),paidB=ownB.reduce((n,s)=>n+s.paidMinutes,0);
+    if(!paidA && !paidB) continue;
+    const rest=onDay.filter(s=>s.employeeId!==a.id && s.employeeId!==b.id);
+    const before=dayCost(onDay,day.blocks,weekday,targets.get(date),ctx);
+    const options=(employee:Employee,paid:number):Option[]=>{
+     if(!paid) return [{shifts:[],styleCost:0}];
+     if(paid<MIN_SHIFT || paid>MAX_PAID || !mayWorkOn(employee,date) || ctx.blocked.get(employee.id)?.has(date)) return [];
+     return optionsFor(employee,date,paid,day.blocks,true,weekday,ctx).filter(option=>option.shifts.some(s=>s.startMinutes===day.window.startMinutes || s.endMinutes===day.window.endMinutes));
+    };
+    for(let delta=-MAX_PAID;delta<=MAX_PAID;delta+=SLOT) {
+     if(!delta) continue;
+     const nextA=paidA+delta,nextB=paidB-delta;
+     const optionsA=options(a,nextA),optionsB=options(b,nextB);
+     let shifts:Shift[]|undefined,cost=Infinity;
+     for(const x of optionsA) for(const y of optionsB) {
+      const next=[...rest,...x.shifts,...y.shifts];
+      const value=dayCost(next,day.blocks,weekday,targets.get(date),ctx);
+      if(value<cost) {cost=value;shifts=next;}
+     }
+     if(shifts) candidates.set(delta,[...(candidates.get(delta) ?? []),{date,shifts,gain:before-cost}]);
+    }
+   }
+   for(const [delta,forward] of candidates) {
+    if(delta<=0) continue;
+    for(const x of forward) for(const y of candidates.get(-delta) ?? []) {
+     const gain=x.gain+y.gain;
+     if(x.date===y.date || gain<=0.01 || gain<=(best?.gain ?? 0)) continue;
+     const next=[...result.filter(s=>s.date!==x.date && s.date!==y.date),...x.shifts,...y.shifts];
+     let valid=true;
+     for(const employee of [a,b]) {
+      const worked=new Set(next.filter(s=>s.employeeId===employee.id).map(s=>s.date));
+      if([...worked].some(date=>consecutiveRunLengthWith(worked,date)>6)) {valid=false;break;}
+      for(const week of new Set([...worked].map(weekStartOf))) {
+       if([...worked].filter(date=>weekStartOf(date)===week).length>dayLimit(employee)) valid=false;
+      }
+     }
+     if(valid) best={shifts:next,gain};
+    }
+   }
+  }
+  if(!best) break;
+  result=best.shifts;
+ }
+ return result;
+}
+
+/** Move a day off together with a colleague's hours. Neither independent move
+ * need improve coverage; accept only the combined improvement, keeping contracts. */
+function relocateRestDays(result: Shift[], employees: Employee[], days: Map<string,Day>, holidays: Set<string>, targets: Map<string,number>, ctx: Ctx): Shift[] {
+ const dates=[...days].filter(([,day])=>!day.closed).map(([date])=>date);
+ const movable=employees.filter(e=>!e.fixedShift && e.weeklyHours==null);
+ for(let pass=0;pass<8;pass++) {
+  let best:{shifts:Shift[];gain:number}|undefined;
+  for(const a of movable) for(const b of movable) {
+   if(a===b || a.workRole!==b.workRole || a.workRole==="BOTH") continue;
+   const own=result.filter(s=>s.employeeId===a.id);
+   const worked=new Set(own.map(s=>s.date));
+   const paidOf=(id:string,date:string)=>result.filter(s=>s.employeeId===id && s.date===date).reduce((n,s)=>n+s.paidMinutes,0);
+   const cache=new Map<string,{shifts:Shift[];cost:number}|null>();
+   const place=(date:string,paidA:number,paidB:number)=>{
+    const key=`${date}:${paidA}:${paidB}`;
+    if(cache.has(key)) return cache.get(key);
+    const day=days.get(date)!,weekday=effectiveWeekdayKey(date,holidays);
+    const rest=result.filter(s=>s.date===date && s.employeeId!==a.id && s.employeeId!==b.id);
+    const options=(e:Employee,paid:number):Option[]=>{
+     if(!paid) return [{shifts:[],styleCost:0}];
+     if(paid<MIN_SHIFT || paid>MAX_PAID || !mayWorkOn(e,date) || ctx.blocked.get(e.id)?.has(date)) return [];
+     return optionsFor(e,date,paid,day.blocks,true,weekday,ctx);
+    };
+    let bestDay:{shifts:Shift[];cost:number}|null=null;
+    for(const x of options(a,paidA)) for(const y of options(b,paidB)) {
+     const shifts=[...rest,...x.shifts,...y.shifts];
+     const cost=dayCost(shifts,day.blocks,weekday,targets.get(date),ctx);
+     if(!bestDay || cost<bestDay.cost) bestDay={shifts,cost};
+    }
+    cache.set(key,bestDay);return bestDay;
+   };
+   for(const to of dates) {
+    if(worked.has(to) || !mayWorkOn(a,to) || ctx.blocked.get(a.id)?.has(to)) continue;
+    const onTo=result.filter(s=>s.date===to);
+    if(!roleGapMinutes(onTo,days.get(to)!.blocks,ctx)) continue;
+    const bTo=paidOf(b.id,to);
+    if(!bTo) continue;
+    for(const from of worked) {
+     const nextWorked=new Set(worked);nextWorked.delete(from);nextWorked.add(to);
+     if([...nextWorked].some(date=>consecutiveRunLengthWith(nextWorked,date)>6)) continue;
+     if([...nextWorked].filter(date=>weekStartOf(date)===weekStartOf(to)).length>dayLimit(a)) continue;
+     const bFrom=paidOf(b.id,from);
+     // B keeps both workdays, so its availability and rest pattern stay fixed.
+     if(!bFrom) continue;
+     const paidA=paidOf(a.id,from);
+     const before=[from,to].reduce((n,date)=>n+dayCost(result.filter(s=>s.date===date),days.get(date)!.blocks,effectiveWeekdayKey(date,holidays),targets.get(date),ctx),0);
+     for(let transfer=SLOT;transfer<=Math.min(bTo-MIN_SHIFT,MAX_PAID-bFrom);transfer+=SLOT) {
+      const dest=place(to,paidA,bTo-transfer),source=place(from,0,bFrom+transfer);
+      if(!dest || !source) continue;
+      const gain=before-dest.cost-source.cost;
+      if(gain>0.01 && gain>(best?.gain ?? 0)) best={shifts:[...result.filter(s=>s.date!==from && s.date!==to),...dest.shifts,...source.shifts],gain};
+     }
+    }
+   }
+  }
+  if(!best) break;
+  result=best.shifts;
+ }
+ return result;
 }

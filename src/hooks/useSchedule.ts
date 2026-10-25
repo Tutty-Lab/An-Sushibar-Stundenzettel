@@ -1,3 +1,4 @@
+import { applyEmployeeEdit } from "../lib/employeeEditing";
 // ============================================================================
 // Zentrales State-Management (ohne externe Bibliothek). Kapselt Schedule,
 // LocalStorage-Persistenz und alle Aktionen (Generieren, Bearbeiten, Reset) –
@@ -6,7 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Employee, Schedule, Shift } from "../types";
-import { generateSchedule } from "../lib/scheduler";
+import { generateScheduleAsync } from "../lib/generateAsync";
 import { isScheduleYearAllowed, SCHEDULE_YEAR_RANGE_LABEL } from "../lib/years";
 import { analyzeSchedule } from "../lib/analyze";
 import { validateSchedule, type ValidationResult } from "../lib/validation";
@@ -117,7 +118,10 @@ function newEmployeeId(): string {
 export function useSchedule(storeId: string) {
   const storeConfig = storeById(storeId);
   const [initial] = useState(() => localStateOf(storeId));
-  const [schedule, setSchedule] = useState<Schedule>(initial.schedule);
+  const [schedule, setScheduleState] = useState<Schedule>(() => withOwner(initial.schedule));
+  const setSchedule = useCallback((next: Schedule | ((current: Schedule) => Schedule)) => {
+    setScheduleState(current => withOwner(typeof next === "function" ? next(current) : next));
+  }, []);
   const [passwordHash, setPasswordHash] = useState<string | undefined>(initial.passwordHash);
   const [originalShifts, setOriginalShifts] = useState<Shift[]>(initial.originalShifts);
   const [genError, setGenError] = useState<string | null>(null);
@@ -383,7 +387,7 @@ export function useSchedule(storeId: string) {
       if (s.lockedAt) return s; // Monat ausgegeben und gesperrt
       return {
         ...s,
-        employees: s.employees.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+        employees: s.employees.map((e) => (e.id === id ? applyEmployeeEdit(e, patch, monthKey(s.year,s.month)) : e)),
       };
     });
   }, []);
@@ -410,10 +414,10 @@ export function useSchedule(storeId: string) {
    * Läden nacheinander geplant werden: wer im ersten Laden schon einen Tag hat,
    * ist im nächsten an diesem Tag blockiert (blockedDays).
    */
-  const generate = useCallback((
+  const generate = useCallback(async (
     target?: { year: number; month: number },
     blockedDays?: Record<string, readonly string[]>,
-  ): Shift[] => {
+  ): Promise<Shift[]> => {
     setGenError(null);
     const year = target?.year ?? schedule.year;
     const month = target?.month ?? schedule.month;
@@ -427,7 +431,7 @@ export function useSchedule(storeId: string) {
       const holidays = publicHolidays(year);
       const monthOpen = datesOfMonth(year, month).filter((d) => !resolveDay(schedule.workHours, d, holidays, overrides).closed);
       const frozen = freezeMonth(schedule.employees, monthKey(year, month), monthOpen, schedule.workHours);
-      const shifts = generateSchedule({
+      const shifts = await generateScheduleAsync({
         year,
         month,
         workHours: schedule.workHours,
@@ -538,14 +542,14 @@ export function useSchedule(storeId: string) {
   }, []);
 
   const addShift = useCallback(
-    (employeeId: string, date: string, start: number, end: number, pause: number, pauseStart?: number) => {
+    (employeeId: string, date: string, start: number, end: number, pause: number, pauseStart?: number, actualMinutes?: number) => {
       setSchedule((s) => {
         if (s.lockedAt) return s; // Monat ausgegeben und gesperrt
         const employee = s.employees.find((e) => e.id === employeeId);
         if (!employee || !mayWorkOn(employee, date) || resolveDay(s.workHours, date, publicHolidays(s.year), overridesToMap(s.dateOverrides)).closed) return s;
         const exists = s.shifts.some((sh) => sh.employeeId === employeeId && sh.date === date);
         if (exists) return s;
-        return { ...s, shifts: [...s.shifts, createManualShift(employeeId, date, start, end, pause, pauseStart)] };
+        return { ...s, shifts: [...s.shifts, { ...createManualShift(employeeId, date, start, end, pause, pauseStart), actualMinutes }] };
       });
     },
     [],

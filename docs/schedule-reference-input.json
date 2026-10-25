@@ -1,0 +1,1854 @@
+{
+  "year": 2026,
+  "month": 10,
+  "employees": [
+    {
+      "id": "ansushibar-1",
+      "name": "Duc Thuan Nguyen",
+      "employmentType": "VOLLZEIT",
+      "targetMinutes": 10380,
+      "workRole": "SERVICE_SUSHI"
+    },
+    {
+      "id": "ansushibar-2",
+      "name": "Nguyen Duc Khai",
+      "employmentType": "VOLLZEIT",
+      "targetMinutes": 10140,
+      "workRole": "KITCHEN"
+    },
+    {
+      "id": "ansushibar-3",
+      "name": "Luu Van Tam",
+      "employmentType": "VOLLZEIT",
+      "targetMinutes": 10140,
+      "workRole": "KITCHEN"
+    },
+    {
+      "id": "ansushibar-4",
+      "name": "Vo Ngoc Duong",
+      "employmentType": "TEILZEIT",
+      "targetMinutes": 6300,
+      "workRole": "SERVICE_SUSHI"
+    },
+    {
+      "id": "ansushibar-5",
+      "name": "Nguyen Vu Sa Lam",
+      "employmentType": "MINIJOB",
+      "targetMinutes": 1200,
+      "workRole": "SERVICE_SUSHI",
+      "availableWeekdays": [
+        "friday",
+        "saturday",
+        "sunday"
+      ]
+    },
+    {
+      "id": "ansushibar-6",
+      "name": "Nguyen Thi Hong Linh",
+      "employmentType": "MINIJOB",
+      "targetMinutes": 1200,
+      "workRole": "SERVICE_SUSHI",
+      "availableWeekdays": [
+        "friday",
+        "saturday",
+        "sunday"
+      ]
+    }
+  ],
+  "days": [
+    {
+      "date": "2026-10-01",
+      "week": "2026-09-28",
+      "weekday": "thursday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-02",
+      "week": "2026-09-28",
+      "weekday": "friday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-03",
+      "week": "2026-09-28",
+      "weekday": "saturday",
+      "closed": true,
+      "blocks": [],
+      "window": {
+        "startMinutes": 0,
+        "endMinutes": 0
+      }
+    },
+    {
+      "date": "2026-10-04",
+      "week": "2026-09-28",
+      "weekday": "sunday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-05",
+      "week": "2026-10-05",
+      "weekday": "monday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-06",
+      "week": "2026-10-05",
+      "weekday": "tuesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-07",
+      "week": "2026-10-05",
+      "weekday": "wednesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-08",
+      "week": "2026-10-05",
+      "weekday": "thursday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-09",
+      "week": "2026-10-05",
+      "weekday": "friday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-10",
+      "week": "2026-10-05",
+      "weekday": "saturday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-11",
+      "week": "2026-10-05",
+      "weekday": "sunday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-12",
+      "week": "2026-10-12",
+      "weekday": "monday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-13",
+      "week": "2026-10-12",
+      "weekday": "tuesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-14",
+      "week": "2026-10-12",
+      "weekday": "wednesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-15",
+      "week": "2026-10-12",
+      "weekday": "thursday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-16",
+      "week": "2026-10-12",
+      "weekday": "friday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-17",
+      "week": "2026-10-12",
+      "weekday": "saturday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-18",
+      "week": "2026-10-12",
+      "weekday": "sunday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-19",
+      "week": "2026-10-19",
+      "weekday": "monday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-20",
+      "week": "2026-10-19",
+      "weekday": "tuesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-21",
+      "week": "2026-10-19",
+      "weekday": "wednesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-22",
+      "week": "2026-10-19",
+      "weekday": "thursday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-23",
+      "week": "2026-10-19",
+      "weekday": "friday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-24",
+      "week": "2026-10-19",
+      "weekday": "saturday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-25",
+      "week": "2026-10-19",
+      "weekday": "sunday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-26",
+      "week": "2026-10-26",
+      "weekday": "monday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-27",
+      "week": "2026-10-26",
+      "weekday": "tuesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-28",
+      "week": "2026-10-26",
+      "weekday": "wednesday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-29",
+      "week": "2026-10-26",
+      "weekday": "thursday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-30",
+      "week": "2026-10-26",
+      "weekday": "friday",
+      "closed": false,
+      "blocks": [
+        {
+          "startMinutes": 630,
+          "endMinutes": 1260
+        }
+      ],
+      "window": {
+        "startMinutes": 630,
+        "endMinutes": 1260
+      }
+    },
+    {
+      "date": "2026-10-31",
+      "week": "2026-10-26",
+      "weekday": "saturday",
+      "closed": true,
+      "blocks": [],
+      "window": {
+        "startMinutes": 0,
+        "endMinutes": 0
+      }
+    }
+  ],
+  "blocked": {
+    "ansushibar-1": [],
+    "ansushibar-2": [],
+    "ansushibar-3": [],
+    "ansushibar-4": [],
+    "ansushibar-5": [
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-11",
+      "2026-10-19",
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24",
+      "2026-10-25"
+    ],
+    "ansushibar-6": [
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-12",
+      "2026-10-13",
+      "2026-10-14",
+      "2026-10-15",
+      "2026-10-16",
+      "2026-10-17",
+      "2026-10-18",
+      "2026-10-26",
+      "2026-10-27",
+      "2026-10-28",
+      "2026-10-29",
+      "2026-10-30",
+      "2026-10-31"
+    ]
+  },
+  "baseline": [
+    {
+      "id": "weekly-ansushibar-1-2026-10-01-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-01",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-01-630-360",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-01",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-01-960-300",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-01",
+      "startMinutes": 960,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 300,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-01-990-270",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-01",
+      "startMinutes": 990,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-02-630-360",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-02",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-02-630-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-02",
+      "startMinutes": 630,
+      "endMinutes": 810,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-02-750-480",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-02",
+      "startMinutes": 750,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-02-810-420",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-02",
+      "startMinutes": 810,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 990,
+      "pauseMinutes": 30,
+      "paidMinutes": 420,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-5-2026-10-02-990-180",
+      "employeeId": "ansushibar-5",
+      "date": "2026-10-02",
+      "startMinutes": 990,
+      "endMinutes": 1170,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-04-630-360",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-04",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-5-2026-10-04-630-210",
+      "employeeId": "ansushibar-5",
+      "date": "2026-10-04",
+      "startMinutes": 630,
+      "endMinutes": 840,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-04-840-390",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-04",
+      "startMinutes": 840,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 900,
+      "pauseMinutes": 30,
+      "paidMinutes": 390,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-04-900-360",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-04",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-05-630-420",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-05",
+      "startMinutes": 630,
+      "endMinutes": 1080,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 420,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-05-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-05",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-05-930-330",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-05",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-05-1080-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-05",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-06-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-06",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-06-630-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-06",
+      "startMinutes": 630,
+      "endMinutes": 810,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-06-810-420",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-06",
+      "startMinutes": 810,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 990,
+      "pauseMinutes": 30,
+      "paidMinutes": 420,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-06-840-390",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-06",
+      "startMinutes": 840,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 390,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-07-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-07",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-07-630-270",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-07",
+      "startMinutes": 630,
+      "endMinutes": 900,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-07-900-360",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-07",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-07-1050-210",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-07",
+      "startMinutes": 1050,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-08-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-08",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-08-660-480",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-08",
+      "startMinutes": 660,
+      "endMinutes": 1170,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-08-1050-210",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-08",
+      "startMinutes": 1050,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-09-630-330",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-09",
+      "startMinutes": 630,
+      "endMinutes": 960,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-09-630-480",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-09",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 750,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-09-750-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-09",
+      "startMinutes": 750,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-09-930-330",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-09",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-10-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-10",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-10-660-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-10",
+      "startMinutes": 660,
+      "endMinutes": 1170,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-6-2026-10-10-1080-180",
+      "employeeId": "ansushibar-6",
+      "date": "2026-10-10",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-11-630-360",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-11",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-6-2026-10-11-630-270",
+      "employeeId": "ansushibar-6",
+      "date": "2026-10-11",
+      "startMinutes": 630,
+      "endMinutes": 900,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-11-900-360",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-11",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-11-990-270",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-11",
+      "startMinutes": 990,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-12-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-12",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-12-630-360",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-12",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-12-780-450",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-12",
+      "startMinutes": 780,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 450,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-12-1080-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-12",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-13-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-13",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-13-630-210",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-13",
+      "startMinutes": 630,
+      "endMinutes": 840,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-13-840-390",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-13",
+      "startMinutes": 840,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 990,
+      "pauseMinutes": 30,
+      "paidMinutes": 390,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-13-840-390",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-13",
+      "startMinutes": 840,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 390,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-14-630-420",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-14",
+      "startMinutes": 630,
+      "endMinutes": 1080,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 420,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-14-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-14",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-14-930-330",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-14",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-14-1080-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-14",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-15-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-15",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-15-660-480",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-15",
+      "startMinutes": 660,
+      "endMinutes": 1170,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-15-780-450",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-15",
+      "startMinutes": 780,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 900,
+      "pauseMinutes": 30,
+      "paidMinutes": 450,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-16-630-330",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-16",
+      "startMinutes": 630,
+      "endMinutes": 960,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-16-630-360",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-16",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-16-810-420",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-16",
+      "startMinutes": 810,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 420,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-5-2026-10-16-960-180",
+      "employeeId": "ansushibar-5",
+      "date": "2026-10-16",
+      "startMinutes": 960,
+      "endMinutes": 1140,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-16-1080-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-16",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-17-630-300",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-17",
+      "startMinutes": 630,
+      "endMinutes": 930,
+      "pauseMinutes": 0,
+      "paidMinutes": 300,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-17-660-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-17",
+      "startMinutes": 660,
+      "endMinutes": 1170,
+      "pauseStartMinutes": 900,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-5-2026-10-17-900-360",
+      "employeeId": "ansushibar-5",
+      "date": "2026-10-17",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-18-630-330",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-18",
+      "startMinutes": 630,
+      "endMinutes": 960,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-5-2026-10-18-630-270",
+      "employeeId": "ansushibar-5",
+      "date": "2026-10-18",
+      "startMinutes": 630,
+      "endMinutes": 900,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-18-900-360",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-18",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-18-930-330",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-18",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-19-630-390",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-19",
+      "startMinutes": 630,
+      "endMinutes": 1050,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 390,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-19-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-19",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-19-780-450",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-19",
+      "startMinutes": 780,
+      "endMinutes": 1260,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 450,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-19-1050-210",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-19",
+      "startMinutes": 1050,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-20-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-20",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-20-660-480",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-20",
+      "startMinutes": 660,
+      "endMinutes": 1170,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-20-1080-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-20",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-21-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-21",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-21-630-300",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-21",
+      "startMinutes": 630,
+      "endMinutes": 930,
+      "pauseMinutes": 0,
+      "paidMinutes": 300,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-21-930-330",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-21",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-21-1050-210",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-21",
+      "startMinutes": 1050,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-22-630-420",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-22",
+      "startMinutes": 630,
+      "endMinutes": 1080,
+      "pauseStartMinutes": 960,
+      "pauseMinutes": 30,
+      "paidMinutes": 420,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-22-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-22",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-22-930-330",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-22",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-22-1080-180",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-22",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-23-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-23",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-6-2026-10-23-630-270",
+      "employeeId": "ansushibar-6",
+      "date": "2026-10-23",
+      "startMinutes": 630,
+      "endMinutes": 900,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-23-900-360",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-23",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-23-900-360",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-23",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-24-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-24",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-24-660-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-24",
+      "startMinutes": 660,
+      "endMinutes": 1170,
+      "pauseStartMinutes": 1020,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-6-2026-10-24-1080-180",
+      "employeeId": "ansushibar-6",
+      "date": "2026-10-24",
+      "startMinutes": 1080,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 180,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-25-630-480",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-25",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 750,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-25-630-330",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-25",
+      "startMinutes": 630,
+      "endMinutes": 960,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-6-2026-10-25-960-300",
+      "employeeId": "ansushibar-6",
+      "date": "2026-10-25",
+      "startMinutes": 960,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 300,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-25-1050-210",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-25",
+      "startMinutes": 1050,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-26-630-360",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-26",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-26-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-26",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-26-900-360",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-26",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-26-1020-240",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-26",
+      "startMinutes": 1020,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 240,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-27-630-480",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-27",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 780,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-27-660-480",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-27",
+      "startMinutes": 660,
+      "endMinutes": 1170,
+      "pauseStartMinutes": 840,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-27-1050-210",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-27",
+      "startMinutes": 1050,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 210,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-28-630-360",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-28",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-28-630-270",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-28",
+      "startMinutes": 630,
+      "endMinutes": 900,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-28-900-360",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-28",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-28-990-270",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-28",
+      "startMinutes": 990,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-29-630-360",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-29",
+      "startMinutes": 630,
+      "endMinutes": 990,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-29-630-330",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-29",
+      "startMinutes": 630,
+      "endMinutes": 960,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-29-930-330",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-29",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-29-960-300",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-29",
+      "startMinutes": 960,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 300,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-3-2026-10-30-630-480",
+      "employeeId": "ansushibar-3",
+      "date": "2026-10-30",
+      "startMinutes": 630,
+      "endMinutes": 1140,
+      "pauseStartMinutes": 930,
+      "pauseMinutes": 30,
+      "paidMinutes": 480,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-4-2026-10-30-630-270",
+      "employeeId": "ansushibar-4",
+      "date": "2026-10-30",
+      "startMinutes": 630,
+      "endMinutes": 900,
+      "pauseMinutes": 0,
+      "paidMinutes": 270,
+      "shiftType": "EARLY",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-1-2026-10-30-900-360",
+      "employeeId": "ansushibar-1",
+      "date": "2026-10-30",
+      "startMinutes": 900,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 360,
+      "shiftType": "LATE",
+      "generated": true
+    },
+    {
+      "id": "weekly-ansushibar-2-2026-10-30-930-330",
+      "employeeId": "ansushibar-2",
+      "date": "2026-10-30",
+      "startMinutes": 930,
+      "endMinutes": 1260,
+      "pauseMinutes": 0,
+      "paidMinutes": 330,
+      "shiftType": "LATE",
+      "generated": true
+    }
+  ]
+}

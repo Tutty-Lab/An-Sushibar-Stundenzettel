@@ -111,7 +111,7 @@ export function GenerateScheduleDialog({
               </select>
             </label>
           </div>
-          <p className="text-xs text-sky-800">Chia giờ nhân viên đều giữa các tuần; tuần ít ngày hoặc có Urlaub nhận ít hơn. Ưu tiên T6–T7 có 3 người (gồm chủ tiệm).</p>
+          <p className="text-xs text-sky-800">Chia giờ nhân viên đều giữa các tuần; tuần ít ngày hoặc có Urlaub nhận ít hơn. Cao điểm 17:30–19:30 cả tuần cần 3 người; T6–T7 đông khách hơn. Chủ tiệm hỗ trợ suốt giờ mở cửa, mỗi lúc một vị trí bếp hoặc bồi; không tính giờ hợp đồng.</p>
           {!simple && <p className="text-xs text-slate-500">Chỉ tạo và in lịch cho các năm {SCHEDULE_YEAR_RANGE_LABEL}.</p>}
 
           {!simple && <div className="rounded border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">

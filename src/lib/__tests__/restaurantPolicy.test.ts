@@ -11,10 +11,21 @@ describe("An Sushibar policy",()=>{
   schedule.employees[4].workRole="BOTH";
   schedule.employees[5].workRole="KITCHEN";
   const migrated=applyReportedHistory(schedule);
-  expect(migrated.historyVersion).toBe(4);
+  expect(migrated.historyVersion).toBe(5);
   expect(migrated.employees.slice(4).map(e=>e.workRole)).toEqual(["SERVICE_SUSHI","SERVICE_SUSHI"]);
   expect(migrated.employees.slice(0,4)).toEqual(schedule.employees.slice(0,4));
-  expect(migrated.employees.slice(4).map(e=>e.targetMinutes)).toEqual([2580,2580]);
+  expect(migrated.employees.slice(4).map(e=>e.targetMinutes)).toEqual([1200,1200]);
+  expect(applyReportedHistory(migrated)).toBe(migrated);
+ });
+ it("updates old 43h defaults once, preserves custom hours and historical months",()=>{
+  const schedule=createSampleSchedule();schedule.historyVersion=4;
+  schedule.employees[4].targetMinutes=2580;
+  schedule.employees[4].payrollRecords=[{month:"2026-09",convertedHours:43},{month:"2026-10",convertedHours:43}];
+  schedule.employees[5].targetMinutes=900;
+  const migrated=applyReportedHistory(schedule);
+  expect(migrated.employees[4].targetMinutes).toBe(1200);
+  expect(migrated.employees[4].payrollRecords).toEqual([{month:"2026-09",convertedHours:43}]);
+  expect(migrated.employees[5].targetMinutes).toBe(900);
   expect(applyReportedHistory(migrated)).toBe(migrated);
  });
  it("reserves rest across both month boundaries without reopening blocked days",()=>{

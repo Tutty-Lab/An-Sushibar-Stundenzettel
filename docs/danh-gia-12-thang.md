@@ -1,3 +1,5 @@
+> Báo cáo cũ dùng minijob 43 giờ/người/tháng. Không áp dụng cho cấu hình 20 giờ hiện tại; xem báo cáo `danh-gia-minijob-20h.md`.
+
 # Đánh giá lịch An Sushibar — 12 tháng 2026
 
 Lưu ý 25/10/2026: Lam và Linh đã chuyển sang bồi/sushi. Các số liệu kiểm tra dưới đây thuộc cấu hình trước thay đổi này, chưa đánh giá lại 12 tháng với bộ phận mới.

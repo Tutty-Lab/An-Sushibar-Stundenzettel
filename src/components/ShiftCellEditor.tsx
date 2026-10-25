@@ -45,6 +45,7 @@ export function ShiftCellEditor({
   let parseError = "";
   try {
     paidPreview = timeToMinutes(end) - timeToMinutes(start) - Number(pause);
+    if (!Number.isFinite(Number(pause)) || Number(pause) < 0 || paidPreview <= 0) parseError = "Giờ ca hoặc thời gian nghỉ không hợp lệ.";
     if (Number(pause) > 0 && !pauseStart) {
       parseError = "Cần nhập giờ bắt đầu nghỉ để kiểm tra đủ người.";
     }
@@ -77,7 +78,7 @@ export function ShiftCellEditor({
       if (!schedule.lockedAt) editShiftTimes(shift.id, { startMinutes: s, endMinutes: en, pauseMinutes: p, pauseStartMinutes: ps });
       setActualMinutes(shift.id, actualValue == null ? undefined : Math.round(actualValue * 60));
     } else {
-      addShift(employeeId, date, s, en, p, ps);
+      addShift(employeeId, date, s, en, p, ps, actualValue == null ? undefined : Math.round(actualValue * 60));
     }
     onClose();
   }

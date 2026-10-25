@@ -1,0 +1,23 @@
+{
+  "baseline": {
+    "constraintErrors": [],
+    "hours": 656,
+    "kitchenGapMinutes": 1080,
+    "serviceGapMinutes": 510,
+    "peakMissingStaffMinutes": 1530,
+    "errors": []
+  },
+  "reference": {
+    "constraintErrors": [],
+    "hours": 656,
+    "kitchenGapMinutes": 1050,
+    "serviceGapMinutes": 300,
+    "peakMissingStaffMinutes": 2580,
+    "errors": []
+  },
+  "solver": {
+    "status": "Feasible combined department incumbents; not proven optimal",
+    "relativeGap": null,
+    "seconds": 121.58964776992798
+  }
+}

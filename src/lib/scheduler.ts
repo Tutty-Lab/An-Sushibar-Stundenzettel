@@ -74,7 +74,7 @@ export function generateSchedule(input: GenerateInput): Shift[] {
       const week = Math.round((Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate()) - Date.UTC(2026, 0, 5)) / (7 * 86400000));
       if (((week % 2) + 2) % 2 !== index) blocked.add(date);
     }
-    // Holiday closures can leave fewer than six weekend days for a 43-hour contract.
+    // Holiday closures can leave too few eligible weekend days for the current contract.
     // Borrow another weekend day only when the alternating weekends cannot hold the hours.
     const holidays = input.holidays ?? publicHolidays(input.year);
     const eligible = datesOfMonth(input.year,input.month).filter(date => mayWorkOn(employee,date) && !resolveDay(input.workHours,date,holidays,input.overrides ?? {}).closed);

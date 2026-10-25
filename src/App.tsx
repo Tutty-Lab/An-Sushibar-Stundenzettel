@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSchedule } from "./hooks/useSchedule";
 import { SettingsTab } from "./components/SettingsTab";
 import { EmployeesTab } from "./components/EmployeesTab";
@@ -102,7 +102,13 @@ function MainApp({ onLogout }: { onLogout: () => void }) {
    * ist an seinen schon verplanten Tagen im nächsten Laden blockiert – die
    * Läden liegen zu weit auseinander für zwei Dienste am selben Tag.
    */
-  const generateAll = (target: { year: number; month: number }) => {
+  const [generating, setGenerating] = useState(false);
+  const generationRunning = useRef(false);
+  const generateAll = async (target: { year: number; month: number }) => {
+    if (generationRunning.current) return;
+    generationRunning.current = true;
+    setGenerating(true);
+    try {
     const busyByPerson = new Map<string, Set<string>>();
     for (const s of stores) {
       const blocked: Record<string, string[]> = {};
@@ -110,13 +116,17 @@ function MainApp({ onLogout }: { onLogout: () => void }) {
         const dates = employee.personKey ? busyByPerson.get(employee.personKey) : undefined;
         if (dates?.size) blocked[employee.id] = [...dates];
       }
-      const shifts = s.generate(target, blocked);
+      const shifts = await s.generate(target, blocked);
       for (const employee of s.schedule.employees) {
         if (!employee.personKey) continue;
         const dates = busyByPerson.get(employee.personKey) ?? new Set<string>();
         for (const shift of shifts) if (shift.employeeId === employee.id) dates.add(shift.date);
         busyByPerson.set(employee.personKey, dates);
       }
+    }
+    } finally {
+      generationRunning.current = false;
+      setGenerating(false);
     }
   };
 
@@ -293,13 +303,26 @@ function MainApp({ onLogout }: { onLogout: () => void }) {
           <button
             type="button"
             onClick={() => setGenDialogOpen(true)}
-            disabled={stores.every((s) => s.schedule.employees.length === 0)}
+            disabled={generating || stores.every((s) => s.schedule.employees.length === 0)}
             className="ml-auto whitespace-nowrap rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40"
           >
-            Tạo lịch
+            {generating ? "Đang tạo lịch…" : "Tạo lịch"}
           </button>
         </div>
       </nav>
+
+      {generating && (
+        <div className="no-print fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4"
+          role="dialog" aria-modal="true" aria-labelledby="generation-title" aria-busy="true" tabIndex={-1}
+          ref={element => element?.focus()}
+          onKeyDown={event => { if (event.key === "Tab") event.preventDefault(); }}>
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-xl" role="status" aria-live="polite">
+            <span aria-hidden="true" className="mx-auto mb-4 block h-9 w-9 animate-spin rounded-full border-[3px] border-emerald-100 border-t-emerald-600" />
+            <h2 id="generation-title" className="font-semibold text-slate-900">Đang tạo lịch…</h2>
+            <p className="mt-2 text-sm text-slate-600">Đang phân ca và cân đối giờ nhân viên. Vui lòng chờ.</p>
+          </div>
+        </div>
+      )}
 
       {genDialogOpen && (
         <GenerateScheduleDialog

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { UseScheduleReturn } from "../hooks/useSchedule";
 import { minutesToTime, timeToMinutes } from "../lib/time";
 import { MONTH_NAMES_VI } from "../lib/dateFormat";
@@ -39,6 +39,19 @@ const WEEKDAY_ORDER: WeekdayKey[] = [
   "sunday",
 ];
 
+function OpeningTimeInput({ value, onChange }: { value: number; onChange: (minutes: number) => void }) {
+  const [text, setText] = useState(minutesToTime(value));
+  useEffect(() => setText(minutesToTime(value)), [value]);
+  return <div className="min-w-0 flex-1 sm:flex-none">
+    <input type="time" className={`${timeClass} w-full min-w-0`} value={text}
+      onChange={e => {
+        setText(e.target.value);
+        try { onChange(timeToMinutes(e.target.value)); } catch { /* Keep incomplete text visible. */ }
+      }} />
+    {!text && <span role="alert" className="text-xs text-rose-600">Nhập đủ giờ để lưu.</span>}
+  </div>;
+}
+
 /**
  * Eine Zeile je Wochentag – mit BELIEBIG VIELEN Blöcken, damit sich eine
  * Mittagsschließung (Di–Sa 14:30–16:30) eintragen lässt.
@@ -75,31 +88,10 @@ function BlockRow({
         <div className="flex-1 space-y-1">
           {blocks.map((b, i) => (
             <div key={i} className="flex items-center gap-2">
-              <input
-                type="time"
-                className={`${timeClass} min-w-0 flex-1 sm:flex-none`}
-                value={minutesToTime(b.startMinutes)}
-                onChange={(e) => {
-                  try {
-                    setBlock(i, { startMinutes: timeToMinutes(e.target.value) });
-                  } catch {
-                    /* nhập chưa xong */
-                  }
-                }}
-              />
+              <OpeningTimeInput value={b.startMinutes} onChange={startMinutes => setBlock(i, { startMinutes })} />
               <span className="text-slate-400">–</span>
-              <input
-                type="time"
-                className={`${timeClass} min-w-0 flex-1 sm:flex-none`}
-                value={minutesToTime(b.endMinutes)}
-                onChange={(e) => {
-                  try {
-                    setBlock(i, { endMinutes: timeToMinutes(e.target.value) });
-                  } catch {
-                    /* nhập chưa xong */
-                  }
-                }}
-              />
+              <OpeningTimeInput value={b.endMinutes} onChange={endMinutes => setBlock(i, { endMinutes })} />
+              {b.endMinutes <= b.startMinutes && <span role="alert" className="text-xs text-rose-600">Giờ kết thúc phải sau giờ bắt đầu.</span>}
               {blocks.length > 1 && (
                 <button
                   type="button"
@@ -153,15 +145,18 @@ export function SettingsTab({ store }: { store: UseScheduleReturn }) {
   const [ovStart, setOvStart] = useState("09:00");
   const [ovEnd, setOvEnd] = useState("15:00");
   const [ovNote, setOvNote] = useState("");
+  const [overrideError, setOverrideError] = useState("");
 
   const effectiveOvDate = ovDate || monthDates[0];
 
   function addOverride() {
     if (!effectiveOvDate) return;
+    setOverrideError("");
     if (ovMode === "closed") {
       upsertOverride({ date: effectiveOvDate, closed: true, note: ovNote.trim() || undefined });
     } else {
       try {
+        if (timeToMinutes(ovEnd) <= timeToMinutes(ovStart)) throw new Error("invalid window");
         upsertOverride({
           date: effectiveOvDate,
           closed: false,
@@ -169,6 +164,7 @@ export function SettingsTab({ store }: { store: UseScheduleReturn }) {
           note: ovNote.trim() || undefined,
         });
       } catch {
+        setOverrideError("Nhập đủ giờ; giờ kết thúc phải sau giờ bắt đầu.");
         return;
       }
     }
@@ -211,6 +207,7 @@ export function SettingsTab({ store }: { store: UseScheduleReturn }) {
 
   return (
     <div className="space-y-4 max-w-3xl">
+      {overrideError && <p role="alert" className="text-sm text-rose-600">{overrideError}</p>}
       <section className="rounded-lg bg-white border border-slate-200 p-4 sm:p-5 shadow-sm">
         <h2 className="text-base font-semibold text-slate-900 mb-4">Cài đặt chung</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
