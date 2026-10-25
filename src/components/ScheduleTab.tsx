@@ -256,7 +256,7 @@ export function ScheduleTab({
 
       {mode === "schedule" && schedule.shifts.length > 0 && <StaffingReport analysis={store.analysis} />}
 
-      {mode === "schedule" && <p className="mb-3 rounded bg-sky-50 px-3 py-2 text-sm text-sky-900">Chủ hỗ trợ suốt giờ mở cửa, mỗi lúc một vị trí Bếp hoặc Bồi; debug chỉ tính nhân viên, không tính chủ. Không tính giờ hợp đồng hay chấm công.</p>}
+      {mode === "schedule" && <p className="mb-3 rounded bg-sky-50 px-3 py-2 text-sm text-sky-900">Chủ hỗ trợ suốt giờ mở cửa, mỗi lúc một vị trí Bếp hoặc Bồi; debug chỉ tính nhân viên; ô “Chủ” nghĩa là không có nhân viên trong khung đó. Chủ không được cộng vào số người. Không tính giờ hợp đồng hay chấm công.</p>}
 
       {/* Lỗi kiểm tra */}
       {mode === "schedule" && !validation.valid && schedule.shifts.length > 0 && (
@@ -456,11 +456,15 @@ export function ScheduleTab({
 
 /** Các khung kiểm tra của nhà hàng, gồm cao điểm mỗi ngày. */
 const { opening, peak } = RESTAURANT_POLICY;
-const GROUP_RANGES = [
-  ["normal", `${minutesToTime(opening.startMinutes)}–${minutesToTime(peak.startMinutes)}`, opening.startMinutes, peak.startMinutes],
-  ["peak", `${minutesToTime(peak.startMinutes)}–${minutesToTime(peak.endMinutes)}`, peak.startMinutes, peak.endMinutes],
-  ["closing", `${minutesToTime(peak.endMinutes)}–${minutesToTime(opening.endMinutes)}`, peak.endMinutes, opening.endMinutes],
-] as const;
+const GROUP_RANGES = Array.from(
+  { length: Math.ceil((opening.endMinutes-opening.startMinutes)/30) },
+  (_,i) => {
+    const from=opening.startMinutes+i*30;
+    const to=Math.min(from+30,opening.endMinutes);
+    return [`slot-${from}`, `${minutesToTime(from)}–${minutesToTime(to)}`, from, to] as const;
+  },
+);
+
 const DEBUG_WINDOWS = [
   { key: "peak", label: `Cao điểm ${minutesToTime(peak.startMinutes)}–${minutesToTime(peak.endMinutes)}`, from: peak.startMinutes, to: peak.endMinutes },
   ...(["KITCHEN", "SERVICE_SUSHI"] as const).flatMap(group => GROUP_RANGES.map(([key, range, from, to]) => ({
@@ -488,9 +492,9 @@ function MinPeopleRow({ label, title, dates, value, gaps, required }: {
         const missing = gaps(d);
         const tone = n == null ? "text-slate-300" : missing.length ? "bg-yellow-50 text-yellow-700 font-semibold" : "";
         const detail = missing.map(gap => `${minutesToTime(gap.startMinutes)}–${minutesToTime(gap.endMinutes)}: thiếu ${Math.max(0, required-gap.count)} người`).join("; ");
-        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n} người · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
+        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n === 0 ? "Chủ · chưa có nhân viên; chủ không tính vào độ phủ" : `${n} nhân viên`} · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
           className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>
-          {n ?? "–"}
+          {n === 0 ? "Chủ" : n ?? "–"}
         </td>;
       })}
       <td className="border-t border-l border-slate-200" />

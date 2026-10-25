@@ -1,7 +1,7 @@
 import type { StoreConfig } from "../lib/stores";
 export function DocsTab(_props: { stores: StoreConfig[] }) {
  return <div className="space-y-3 rounded-lg bg-white p-5"><h2>An Sushibar — Quy tắc xếp lịch</h2>
- <p>Kramerplatz 5, 06618 Naumburg. Mở T2–CN 10:30–21:00 liên tục. Ngày lễ đóng cửa.</p>
+ <p>Kramerplatz 5, 06618 Naumburg. Mở T2–CN 10:30–21:00 liên tục. Ngày lễ vẫn mở 10:30–21:00.</p>
  <p>T6–T7 đông hơn; cao điểm mỗi ngày 17:30–19:30. Khải và Tâm: bếp. Dương và Thuận: bồi, sushi.</p>
  <p>Thuận 173 giờ; Khải 169 giờ; Tâm 169 giờ; Dương 105 giờ/tháng.</p>
  <p>Lam và Linh: minijob T6–CN, ưu tiên luân phiên cuối tuần; được bù cuối tuần khác nếu lễ làm thiếu sức chứa hợp đồng. Mỗi người 20 giờ/tháng; bộ phận bồi/sushi.</p>

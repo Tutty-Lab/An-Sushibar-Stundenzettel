@@ -1,4 +1,4 @@
-// An Sushibar, Naumburg (Sachsen-Anhalt). 10:30–21:00, lễ đóng.
+// An Sushibar, Naumburg (Sachsen-Anhalt). 10:30–21:00, lễ mở.
 import { parseIsoDate, weekdayKeyOf, type WeekdayKey } from "./demand";
 
 export type DayWindow = { startMinutes: number; endMinutes: number };
@@ -69,7 +69,7 @@ const CLOSED_WEEKDAYS: Record<WeekdayKey, boolean> = {
   sunday: false,
 };
 
-// An Sushibar: T2–CN 10:30–21:00, lễ đóng.
+// An Sushibar: T2–CN 10:30–21:00, lễ mở.
 const STUDIO_TAG: DayBlocks = [w(10 * 60 + 30, 21 * 60)];
 
 export const ANSUSHIBAR_WORK_HOURS: WorkHoursConfig = {
@@ -82,9 +82,9 @@ export const ANSUSHIBAR_WORK_HOURS: WorkHoursConfig = {
     saturday: copy(STUDIO_TAG),
     sunday: copy(STUDIO_TAG),
   },
-  holiday: copy(STUDIO_TAG), // wird durch holidayClosed nicht benutzt
+  holiday: copy(STUDIO_TAG),
   closedWeekdays: { ...CLOSED_WEEKDAYS },
-  holidayClosed: true,
+  holidayClosed: false,
 };
 
 /** Rückfall, wenn keine Filiale angegeben ist (Tests, Standardparameter). */

@@ -1,3 +1,5 @@
+import { resolveDay } from "../workHours";
+import { publicHolidays } from "../holidays";
 import { staffingWindows, workloadAt } from "../staffing";
 import { boundaryRestDays } from "../scheduler";
 import type { Shift } from "../../types";
@@ -11,7 +13,7 @@ describe("An Sushibar policy",()=>{
   schedule.employees[4].workRole="BOTH";
   schedule.employees[5].workRole="KITCHEN";
   const migrated=applyReportedHistory(schedule);
-  expect(migrated.historyVersion).toBe(5);
+  expect(migrated.historyVersion).toBe(6);
   expect(migrated.employees.slice(4).map(e=>e.workRole)).toEqual(["SERVICE_SUSHI","SERVICE_SUSHI"]);
   expect(migrated.employees.slice(0,4)).toEqual(schedule.employees.slice(0,4));
   expect(migrated.employees.slice(4).map(e=>e.targetMinutes)).toEqual([1200,1200]);
@@ -60,4 +62,14 @@ describe("An Sushibar policy",()=>{
   expect(migrated.employees[4].preferredWindows).toBeUndefined();
   expect(migrated.employees[5].preferredWindows).toEqual(schedule.employees[5].preferredWindows);
  });
+});
+
+it("opens holidays once for saved stores, preserves later preferences and date closures",()=>{
+ const schedule=createSampleSchedule();schedule.historyVersion=5;schedule.workHours.holidayClosed=true;
+ const migrated=applyReportedHistory(schedule);
+ expect(migrated.workHours.holidayClosed).toBe(false);
+ expect(resolveDay(migrated.workHours,"2026-10-03",publicHolidays(2026)).closed).toBe(false);
+ expect(resolveDay(migrated.workHours,"2026-10-03",publicHolidays(2026),{"2026-10-03":{date:"2026-10-03",closed:true}}).closed).toBe(true);
+ const custom={...migrated,workHours:{...migrated.workHours,holidayClosed:true}};
+ expect(applyReportedHistory(custom)).toBe(custom);
 });

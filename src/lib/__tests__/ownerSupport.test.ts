@@ -16,7 +16,7 @@ describe("owner support",()=>{
   expect(owner.find(s=>workingAt(s,900))?.assignedRole).toBe("KITCHEN");
   expect(owner.find(s=>workingAt(s,630))?.assignedRole).toBe("SERVICE_SUSHI");
   for(let t=630;t<1260;t++) expect(owner.filter(s=>workingAt(s,t))).toHaveLength(1);
-  expect(schedule.shifts.some(s=>s.employeeId===OWNER.id && s.date==="2026-10-03")).toBe(false);
+  expect(schedule.shifts.some(s=>s.employeeId===OWNER.id && s.date==="2026-10-03")).toBe(true);
   expect(withOwner(schedule).shifts).toEqual(schedule.shifts);
   expect(schedule.employees.filter(e=>e.isOwner)).toHaveLength(1);
   const day=schedule.shifts.filter(s=>s.date==="2026-10-01");

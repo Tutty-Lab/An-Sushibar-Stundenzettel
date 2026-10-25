@@ -12,32 +12,34 @@ describe("An Sushibar", () => {
  const s = initialScheduleFor(STORES[0]);
  expect(STORES[0].id).toBe("ansushibar"); expect(s.address).toBe("Kramerplatz 5, 06618 Naumburg");
  expect(s.employees.map(e => e.targetMinutes / 60)).toEqual([173,169,169,105,20,20]);
- expect(s.workHours.closedWeekdays.sunday).toBe(false); expect(s.workHours.holidayClosed).toBe(true);
+ expect(s.workHours.closedWeekdays.sunday).toBe(false); expect(s.workHours.holidayClosed).toBe(false);
  expect(s.workHours.perWeekday.sunday).toEqual([{startMinutes:630,endMinutes:1260}]);
  });
  it("uses Sachsen-Anhalt holidays", () => {
  const h = publicHolidayNames(2026); expect(h.has("2026-01-06")).toBe(true); expect(h.has("2026-11-18")).toBe(false);
  });
- it("keeps minijobs on weekends, holidays closed, contracts capped", () => {
+ it("keeps minijobs on weekends, holidays open, contracts capped", () => {
  const store = STORES[0]; const employees = store.sampleEmployees();
  const shifts = generateSchedule({year:2026,month:10,workHours:store.workHours,employees,rules:store.staffingRules,weights:store.dayWeights});
  expect(shifts.length).toBeGreaterThan(0);
+ expect(shifts.some(s=>s.date==="2026-10-03")).toBe(true);
+ expect(shifts.some(s=>s.date==="2026-10-31")).toBe(true);
  for (const e of employees.filter(e=>e.employmentType === "MINIJOB")) expect(shifts.filter(s=>s.employeeId===e.id).reduce((n,s)=>n+s.paidMinutes,0)).toBe(20 * 60);
  const lam = new Set(shifts.filter(s=>s.employeeId==="ansushibar-5").map(s=>s.date));
  expect(shifts.filter(s=>s.employeeId==="ansushibar-6").every(s=>!lam.has(s.date))).toBe(true);
  for (const e of employees) expect(shifts.filter(s=>s.employeeId===e.id).reduce((sum,s)=>sum+s.paidMinutes,0)).toBeLessThanOrEqual(e.targetMinutes);
- for (const s of shifts) { expect(s.date).not.toBe("2026-10-03"); expect(s.date).not.toBe("2026-10-31"); expect(s.startMinutes).toBeGreaterThanOrEqual(630); expect(s.endMinutes).toBeLessThanOrEqual(1260); if (["ansushibar-5","ansushibar-6"].includes(s.employeeId)) expect([0,5,6]).toContain(new Date(s.date+"T12:00:00").getDay()); }
+ for (const s of shifts) { expect(s.startMinutes).toBeGreaterThanOrEqual(630); expect(s.endMinutes).toBeLessThanOrEqual(1260); if (["ansushibar-5","ansushibar-6"].includes(s.employeeId)) expect([0,5,6]).toContain(new Date(s.date+"T12:00:00").getDay()); }
  });
 });
 
-describe("An Sushibar contract completion", () => {
+describe("An Sushibar historical holiday-closed contract completion", () => {
  for(let month=1;month<=12;month++) it(`fills feasible monthly hours in 2026-${month}`,()=>{
   const store=STORES[0]; const employees=store.sampleEmployees();
   if(month===10) employees[0].targetMinutes+=18; // 656.3 h, including an unschedulable 18-minute remainder.
-  const shifts=generateSchedule({year:2026,month,workHours:store.workHours,employees,rules:store.staffingRules,weights:store.dayWeights});
+  const shifts=generateSchedule({year:2026,month,workHours:{...store.workHours,holidayClosed:true},employees,rules:store.staffingRules,weights:store.dayWeights});
   expect(shifts.reduce((n,s)=>n+s.paidMinutes,0)).toBe(656*60);
   for(const employee of employees) expect(shifts.filter(s=>s.employeeId===employee.id).reduce((n,s)=>n+s.paidMinutes,0)).toBe(Math.floor(employee.targetMinutes/30)*30);
-  const open=datesOfMonth(2026,month).filter(date=>!resolveDay(store.workHours,date,publicHolidays(2026),{}).closed);
+  const open=datesOfMonth(2026,month).filter(date=>!resolveDay({...store.workHours,holidayClosed:true},date,publicHolidays(2026),{}).closed);
   const validation = validateSchedule(employees,shifts,2026,open,store.workHours);
   expect(validation.errors.filter(e=>e.severity!=="warning")).toEqual([]);
   const shortage = (role: string) => open.reduce((sum,date)=>sum+coverageSummary(shifts.filter(s=>s.date===date && employees.find(e=>e.id===s.employeeId)?.workRole===role),630,1260,1).gaps.reduce((n,g)=>n+g.endMinutes-g.startMinutes,0),0);
