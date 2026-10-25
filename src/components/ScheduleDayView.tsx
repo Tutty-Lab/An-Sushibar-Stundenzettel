@@ -1,3 +1,4 @@
+import { roleLabel } from "../lib/shiftRoles";
 import { useMemo, useRef, useState, useEffect } from "react";
 import type { UseScheduleReturn } from "../hooks/useSchedule";
 import type { Shift } from "../types";
@@ -184,6 +185,7 @@ export function ScheduleDayView({
                     <div key={shift.id}>
                       <div className="font-semibold">
                         {minutesToTime(shift.startMinutes)}–{minutesToTime(shift.endMinutes)}
+                        {shift.assignedRole && <span className="ml-2 text-sm">{roleLabel(shift.assignedRole)}</span>}
                       </div>
                       <div className="text-xs opacity-80">
                         {minutesToShortHours(shift.paidMinutes)} · <PauseLabel shift={shift} />

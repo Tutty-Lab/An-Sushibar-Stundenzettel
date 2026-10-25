@@ -1,3 +1,4 @@
+import { assignShiftRoles } from "./shiftRoles";
 // An Sushibar: bộ lập lịch riêng cho nhà hàng, không dùng quy tắc tiệm nail.
 
 import type { Employee, Shift } from "../types";
@@ -63,7 +64,7 @@ export function boundaryRestDays(input: GenerateInput): Record<string, readonly 
 export function generateSchedule(input: GenerateInput): Shift[] {
   input = { ...input, blockedDays: boundaryRestDays(input) };
   const pair = input.employees.filter(e => ["ansushibar-5", "ansushibar-6"].includes(e.id)).sort((a,b) => a.id.localeCompare(b.id));
-  if (pair.length !== 2) return completeContractHours(input, enforceRest(generateWeeklySchedule(input)));
+  if (pair.length !== 2) return assignShiftRoles(completeContractHours(input, enforceRest(generateWeeklySchedule(input))), input.employees);
   const blockedDays = { ...input.blockedDays };
   for (const [index, employee] of pair.entries()) {
     const blocked = new Set(blockedDays[employee.id] ?? []);
@@ -86,5 +87,5 @@ export function generateSchedule(input: GenerateInput): Shift[] {
     blockedDays[employee.id] = [...blocked];
   }
   const configured = { ...input, blockedDays };
-  return completeContractHours(configured, enforceRest(generateWeeklySchedule(configured)));
+  return assignShiftRoles(completeContractHours(configured, enforceRest(generateWeeklySchedule(configured))), input.employees);
 }

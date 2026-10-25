@@ -1,3 +1,4 @@
+import { effectiveShiftRole } from "./shiftRoles";
 import { coverageSummary, type CoverageGap } from "./coverage";
 // ============================================================================
 // Auswertung eines fertigen Dienstplans. Rein lesend – verändert nichts.
@@ -167,11 +168,11 @@ export function analyzeSchedule(input: AnalyzeInput): ScheduleAnalysis {
       for(const role of ["KITCHEN","SERVICE_SUSHI"] as const) for(const block of day.blocks) {
         const points=coveragePoints(available,block.startMinutes,block.endMinutes).slice(0,-1);
         const counts=points.map(minute=>new Set(available.filter(shift=>{
-          const assigned=employeesById.get(shift.employeeId)?.workRole;
-          return workingAt(shift,minute) && (assigned===role || assigned==="BOTH");
+          const assigned=effectiveShiftRole(shift,employeesById.get(shift.employeeId));
+          return workingAt(shift,minute) && (assigned===role);
         }).map(shift=>shift.employeeId)).size);
         const minimum=counts.length?Math.min(...counts):0;
-        peaks.push({gaps:coverageSummary(available.filter(s=>{ const assigned=employeesById.get(s.employeeId)?.workRole; return assigned===role || assigned==="BOTH"; }),block.startMinutes,block.endMinutes,1).gaps,label:role==="KITCHEN"?"Bếp trong giờ mở cửa":"Bồi trong giờ mở cửa",minStaff:minimum,maxStaff:counts.length?Math.max(...counts):0,required:1,allowed:Infinity,ok:minimum>=1,startMinutes:block.startMinutes,endMinutes:block.endMinutes});
+        peaks.push({gaps:coverageSummary(available.filter(s=>{ const assigned=effectiveShiftRole(s,employeesById.get(s.employeeId)); return assigned===role; }),block.startMinutes,block.endMinutes,1).gaps,label:role==="KITCHEN"?"Bếp trong giờ mở cửa":"Bồi trong giờ mở cửa",minStaff:minimum,maxStaff:counts.length?Math.max(...counts):0,required:1,allowed:Infinity,ok:minimum>=1,startMinutes:block.startMinutes,endMinutes:block.endMinutes});
       }
     }
 

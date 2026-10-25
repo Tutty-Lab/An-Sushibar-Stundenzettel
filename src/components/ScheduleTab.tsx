@@ -1,3 +1,4 @@
+import { effectiveShiftRole, roleLabel } from "../lib/shiftRoles";
 import { coverageSummary, type CoverageGap } from "../lib/coverage";
 import { isOnVacation } from "../lib/availability";
 import { useMemo, useState } from "react";
@@ -171,8 +172,8 @@ export function ScheduleTab({
       const closers = dayShifts.filter((s) => s.endMinutes >= to).map((s) => nameOf.get(s.employeeId));
       for (const w of DEBUG_WINDOWS) {
         const eligible = dayShifts.filter(s => {
-          const role = schedule.employees.find(e => e.id === s.employeeId)?.workRole;
-          return !("group" in w) || role === w.group || role === "BOTH";
+          const role = effectiveShiftRole(s, schedule.employees.find(e => e.id === s.employeeId));
+          return !("group" in w) || role === w.group;
         });
         const required = "group" in w ? 1 : w.key === "peak" ? 3 : 2;
         windows.set(w.key, coverageSummary(eligible, Math.max(w.from, from), Math.min(w.to, to), required));
@@ -372,6 +373,7 @@ export function ScheduleTab({
                               {dienste.map((x) => (
                                 <div key={x.id}>
                                   {shortTime(x.startMinutes)}–{shortTime(x.endMinutes)}
+                                  {x.assignedRole && <div className="font-normal text-slate-600">{roleLabel(x.assignedRole)}</div>}
                                 </div>
                               ))}
                             </div>

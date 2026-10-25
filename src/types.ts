@@ -134,6 +134,7 @@ export type Employee = {
 };
 
 export type Shift = {
+  assignedRole?: "KITCHEN" | "SERVICE_SUSHI";
   /** Explicit unpaid break, excluded from staffing coverage. */
   pauseStartMinutes?: number;
   id: string;
