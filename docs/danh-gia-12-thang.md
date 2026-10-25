@@ -1,5 +1,7 @@
 # Đánh giá lịch An Sushibar — 12 tháng 2026
 
+Lưu ý 25/10/2026: Lam và Linh đã chuyển sang bồi/sushi. Các số liệu kiểm tra dưới đây thuộc cấu hình trước thay đổi này, chưa đánh giá lại 12 tháng với bộ phận mới.
+
 Cao điểm **mỗi ngày mở cửa 17:30–19:30**, mục tiêu 3 người. T6/T7 vẫn là ngày đông hơn theo hệ số ngày; không giới hạn cao điểm vào hai ngày này. Lễ đóng cửa. Bếp và bồi mỗi bộ phận ít nhất 1 người suốt 10:30–21:00. Nhân viên linh hoạt chỉ giữ một vị trí tại một thời điểm.
 
 Bộ lập lịch riêng restaurantScheduler.ts, chính sách restaurantPolicy.ts. Không dùng ưu tiên 3 người cả ngày hay lịch hẹn tiệm nail. Giữ đủ giờ hợp đồng, ngày khả dụng, giới hạn ngày làm và giờ nghỉ. Kho lịch tháng liền kề được xét để tránh làm quá 6 ngày liên tiếp.

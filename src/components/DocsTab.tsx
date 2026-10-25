@@ -4,7 +4,7 @@ export function DocsTab(_props: { stores: StoreConfig[] }) {
  <p>Kramerplatz 5, 06618 Naumburg. Mở T2–CN 10:30–21:00 liên tục. Ngày lễ đóng cửa.</p>
  <p>T6–T7 đông hơn; cao điểm mỗi ngày 17:30–19:30. Khải và Tâm: bếp. Dương và Thuận: bồi, sushi.</p>
  <p>Thuận 173 giờ; Khải 169 giờ; Tâm 169 giờ; Dương 105 giờ/tháng.</p>
- <p>Lam và Linh: minijob T6–CN, ưu tiên luân phiên cuối tuần; được bù cuối tuần khác nếu lễ làm thiếu sức chứa hợp đồng. Mỗi người 43 giờ/tháng; tạm linh hoạt bồi/bếp, chờ xác nhận.</p>
+ <p>Lam và Linh: minijob T6–CN, ưu tiên luân phiên cuối tuần; được bù cuối tuần khác nếu lễ làm thiếu sức chứa hợp đồng. Mỗi người 43 giờ/tháng; bộ phận bồi/sushi.</p>
  <p>Tiệm không đóng nghỉ trưa. Ca dài vẫn có nghỉ lao động. Ưu tiên phủ riêng bếp/bồi, sau đó cao điểm tối, đủ giờ hợp đồng và cân ngày. Một người linh hoạt chỉ phủ một vị trí tại một thời điểm. Khoảng thiếu vẫn được báo để duyệt.</p>
  </div>;
 }

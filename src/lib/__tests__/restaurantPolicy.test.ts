@@ -6,6 +6,17 @@ import { missingRestaurantRoles, RESTAURANT_POLICY } from "../restaurantPolicy";
 import { applyReportedHistory } from "../history";
 import { createSampleSchedule } from "../sampleData";
 describe("An Sushibar policy",()=>{
+ it("migrates all saved minijobs to service once, preserving other roles and contracts",()=>{
+  const schedule=createSampleSchedule(); schedule.historyVersion=3;
+  schedule.employees[4].workRole="BOTH";
+  schedule.employees[5].workRole="KITCHEN";
+  const migrated=applyReportedHistory(schedule);
+  expect(migrated.historyVersion).toBe(4);
+  expect(migrated.employees.slice(4).map(e=>e.workRole)).toEqual(["SERVICE_SUSHI","SERVICE_SUSHI"]);
+  expect(migrated.employees.slice(0,4)).toEqual(schedule.employees.slice(0,4));
+  expect(migrated.employees.slice(4).map(e=>e.targetMinutes)).toEqual([2580,2580]);
+  expect(applyReportedHistory(migrated)).toBe(migrated);
+ });
  it("reserves rest across both month boundaries without reopening blocked days",()=>{
   const schedule = createSampleSchedule();
   const employee = schedule.employees[0];

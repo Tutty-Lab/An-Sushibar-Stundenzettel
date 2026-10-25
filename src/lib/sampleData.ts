@@ -14,7 +14,7 @@ export function ansushibarEmployees(): Employee[] {
   { ...makeEmployee("ansushibar-4", "Vo Ngoc Duong", "TEILZEIT", 105), workRole: "SERVICE_SUSHI" },
   ...["Nguyen Vu Sa Lam", "Nguyen Thi Hong Linh"].map((name, i): Employee => ({
    ...makeEmployee(`ansushibar-${i + 5}`, name, "MINIJOB", 43),
-   workRole: "BOTH",
+   workRole: "SERVICE_SUSHI",
    availableWeekdays: ["friday", "saturday", "sunday"],
   })),
  ];
