@@ -1,4 +1,4 @@
-import { RESTAURANT_POLICY, missingRestaurantRoles } from "./restaurantPolicy";
+import { RESTAURANT_POLICY, missingRestaurantRoles, isOptionalCoverageTime } from "./restaurantPolicy";
 import { employeeForMonth } from "./history";
 import type { Employee, PreferredWindow, Shift } from "../types";
 import { DAY_WEIGHTS, datesOfMonth, parseIsoDate, weekdayKeyOf, type WeekdayKey } from "./demand";
@@ -261,6 +261,7 @@ function dayModel(blocks: DayBlocks, weekday: WeekdayKey, targetHours: number, c
  * niemand mehr im Laden. Offen mit einer Person ist immer besser als zu.
  */
 function restaurantRoleShortage(shifts: Shift[], minute: number, ctx: Ctx): number {
+ if(isOptionalCoverageTime(minute))return 0;
  // Generic fixtures without role data retain the ordinary headcount model.
  if (![...ctx.roles.values()].some(Boolean)) return 0;
  let kitchen=0, service=0, flexible=0;

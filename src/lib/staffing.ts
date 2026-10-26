@@ -11,7 +11,7 @@ export type StaffingWindow = {
   maxStaff: number;
 };
 
-/** An Sushibar: chỉ cao điểm tối 17:30–19:30. */
+/** An Sushibar: chỉ cao điểm tối 17:00–19:30. */
 export const PEAK_START = RESTAURANT_POLICY.peak.startMinutes;
 export const PEAK_END = RESTAURANT_POLICY.peak.endMinutes;
 
@@ -52,8 +52,8 @@ export const BUSY_DAYS: readonly WeekdayKey[] = ["friday", "saturday"];
 
 /** Mức phủ vận hành: bếp + bồi; thêm người mỗi ngày trong cao điểm tối. */
 export const ANSUSHIBAR_STAFFING_RULES: readonly StaffingRule[] = [
- { label: "Trong giờ mở cửa", when: "10:30–21:00", minStaff: 2, maxStaff: Infinity, scaled: false, windows: wholeDay },
- { label: "Cao điểm tối cả tuần", when: "17:30–19:30", minStaff: 3, maxStaff: 6, scaled: false, weekdays: RESTAURANT_POLICY.peak.weekdays, windows: clip(PEAK_START, PEAK_END) },
+ { label: "Khung cần đủ bếp và bồi", when: "10:30–14:00, 16:00–21:00", minStaff: 2, maxStaff: Infinity, scaled: false, windows: (blocks) => [...clip(630,840)(blocks), ...clip(960,1260)(blocks)] },
+ { label: "Cao điểm tối cả tuần", when: "17:00–19:30", minStaff: 3, maxStaff: 6, scaled: false, weekdays: RESTAURANT_POLICY.peak.weekdays, windows: clip(PEAK_START, PEAK_END) },
 ];
 
 /** Rückfall für Tests und Altaufrufe. */
@@ -119,7 +119,7 @@ const band = (from: string, to: string, level: number, label: string): DemandBan
   return { startMinutes: toMinutes(from), endMinutes: toMinutes(to), level, label };
 };
 
-const restaurantDemand = [band("10:30", "17:30", 1, "Ban ngày"), band("17:30", "19:30", 2.5, "Cao điểm tối"), band("19:30", "21:00", 1, "Cuối ngày")];
+const restaurantDemand = [band("10:30", "14:00", 1, "Buổi trưa"), band("14:00", "16:00", 0, "Có thể không bố trí nhân viên"), band("16:00", "17:00", 1, "Trước cao điểm"), band("17:00", "19:30", 2.5, "Cao điểm tối"), band("19:30", "21:00", 1, "Cuối ngày")];
 export const DEMAND_PROFILE = { normal: restaurantDemand, saturday: restaurantDemand };
 
 export function demandProfileOf(

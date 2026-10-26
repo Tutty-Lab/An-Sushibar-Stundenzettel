@@ -1,4 +1,4 @@
-import { RESTAURANT_POLICY } from "../lib/restaurantPolicy";
+import { RESTAURANT_POLICY, isOptionalCoverageTime } from "../lib/restaurantPolicy";
 import { effectiveShiftRole, roleLabel } from "../lib/shiftRoles";
 import { coverageSummary, type CoverageGap } from "../lib/coverage";
 import { isOnVacation } from "../lib/availability";
@@ -22,7 +22,6 @@ import { weeksOfMonth } from "../lib/weeks";
 import { employmentShortVi } from "../lib/employment";
 import { monthlyTargetMinutesFor, SCHEDULE_SLOT_MINUTES } from "../lib/contract";
 import { StaffingReport } from "./StaffingReport";
-import type { PeakCoverage } from "../lib/analyze";
 
 
 /** „17", „11½" (halbe Stunde), sonst „11:15" – so bleibt die Zelle schmal. */
@@ -140,19 +139,6 @@ export function ScheduleTab({
     return stats;
   }, [dates, schedule.shifts, schedule.employees]);
 
-  // Chân bảng „ít nhất … người" je Besetzungsregel (wie Thienlong, ohne Bếp/Bồi):
-  // dieselben Zahlen, die auch die Prüfung benutzt – Tag → Label → Spannen.
-  const peaksByDay = useMemo(() => {
-    const map = new Map<string, { targetHours: number; byLabel: Map<string, PeakCoverage[]> }>();
-    for (const day of store.analysis.days) {
-      const byLabel = new Map<string, PeakCoverage[]>();
-      for (const peak of day.peaks) byLabel.set(peak.label, [...(byLabel.get(peak.label) ?? []), peak]);
-      map.set(day.date, { targetHours: day.targetHours, byLabel });
-    }
-    return map;
-  }, [store.analysis]);
-
-
   // Debug: ai mở cửa / đóng cửa, và số người ÍT NHẤT có mặt trong từng khung
   // (trừ giờ nghỉ) – để chủ đánh giá lịch nhanh theo từng ngày.
   const debugStats = useMemo(() => {
@@ -178,7 +164,7 @@ export function ScheduleTab({
           const role = effectiveShiftRole(s, schedule.employees.find(e => e.id === s.employeeId));
           return !("group" in w) || role === w.group;
         });
-        const required = "group" in w ? 1 : w.key === "peak" ? 3 : 2;
+        const required = "group" in w ? (isOptionalCoverageTime(w.from) ? 0 : 1) : w.key === "peak" ? 3 : 2;
         windows.set(w.key, coverageSummary(eligible, Math.max(w.from, from), Math.min(w.to, to), required));
       }
       result.set(d, { open: openers.join(", ") || "✗", close: closers.join(", ") || "✗", windows });
@@ -409,15 +395,6 @@ export function ScheduleTab({
                 dates={gridDates}
                 value={(d) => minutesToShortHours(dayStats.get(d)!.total)}
               />
-              <SummaryRow
-                label="Giờ mục tiêu"
-                hint="theo hệ số ngày"
-                dates={gridDates}
-                value={(d) => {
-                  const day = peaksByDay.get(d);
-                  return day && day.targetHours > 0 ? minutesToShortHours(Math.round(day.targetHours * 2) * 30) : "–";
-                }}
-              />
               <SummaryRow label="Ca sáng" dates={gridDates} value={(d) => String(dayStats.get(d)!.early)} />
               <SummaryRow label="Ca chiều" dates={gridDates} value={(d) => String(dayStats.get(d)!.late)} />
               {(
@@ -427,7 +404,7 @@ export function ScheduleTab({
                       key={w.key}
                       label={w.label}
                       title={`${w.label}: số người ít nhất có mặt, đã trừ giờ nghỉ. Vàng = thiếu người; rê chuột để xem khung giờ và số người thiếu.`}
-                      required={"group" in w ? 1 : w.key === "peak" ? 3 : 2}
+                      required={"group" in w ? (isOptionalCoverageTime(w.from) ? 0 : 1) : w.key === "peak" ? 3 : 2}
                       dates={gridDates}
                       gaps={(d) => debugStats.get(d)?.windows.get(w.key)?.gaps ?? []}
                       value={(d) => debugStats.get(d)?.windows.get(w.key)?.minimum ?? null}
@@ -460,10 +437,10 @@ const GROUP_RANGES = Array.from(
   { length: Math.ceil((opening.endMinutes-opening.startMinutes)/30) },
   (_,i) => {
     const from=opening.startMinutes+i*30;
-    const to=Math.min(from+30,opening.endMinutes);
+    const to=from===peak.startMinutes ? peak.endMinutes : Math.min(from+30,opening.endMinutes);
     return [`slot-${from}`, `${minutesToTime(from)}–${minutesToTime(to)}`, from, to] as const;
   },
-);
+).filter(([, , from]) => from<=peak.startMinutes || from>=peak.endMinutes);
 
 const DEBUG_WINDOWS = [
   { key: "peak", label: `Cao điểm ${minutesToTime(peak.startMinutes)}–${minutesToTime(peak.endMinutes)}`, from: peak.startMinutes, to: peak.endMinutes },
@@ -492,9 +469,9 @@ function MinPeopleRow({ label, title, dates, value, gaps, required }: {
         const missing = gaps(d);
         const tone = n == null ? "text-slate-300" : missing.length ? "bg-yellow-50 text-yellow-700 font-semibold" : "";
         const detail = missing.map(gap => `${minutesToTime(gap.startMinutes)}–${minutesToTime(gap.endMinutes)}: thiếu ${Math.max(0, required-gap.count)} người`).join("; ");
-        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n === 0 ? "Chủ · chưa có nhân viên; chủ không tính vào độ phủ" : `${n} nhân viên`} · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
+        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n === 0 ? (required===0 ? "Không bố trí nhân viên · được phép trống" : "Chủ · chưa có nhân viên; chủ không tính vào độ phủ") : `${n} nhân viên`} · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
           className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>
-          {n === 0 ? "Chủ" : n ?? "–"}
+          {n === 0 ? (required===0 ? "–" : "Chủ") : n ?? "–"}
         </td>;
       })}
       <td className="border-t border-l border-slate-200" />
