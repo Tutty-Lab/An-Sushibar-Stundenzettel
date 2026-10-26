@@ -469,9 +469,9 @@ function MinPeopleRow({ label, title, dates, value, gaps, required }: {
         const missing = gaps(d);
         const tone = n == null ? "text-slate-300" : missing.length ? "bg-yellow-50 text-yellow-700 font-semibold" : "";
         const detail = missing.map(gap => `${minutesToTime(gap.startMinutes)}–${minutesToTime(gap.endMinutes)}: thiếu ${Math.max(0, required-gap.count)} người`).join("; ");
-        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n === 0 ? (required===0 ? "Không bố trí nhân viên · được phép trống" : "Chủ · chưa có nhân viên; chủ không tính vào độ phủ") : `${n} nhân viên`} · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
+        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n === 0 ? "Chủ · chưa có nhân viên; chủ không tính vào độ phủ" : `${n} nhân viên`} · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
           className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>
-          {n === 0 ? (required===0 ? "–" : "Chủ") : n ?? "–"}
+          {n === 0 ? "Chủ" : n ?? "–"}
         </td>;
       })}
       <td className="border-t border-l border-slate-200" />
