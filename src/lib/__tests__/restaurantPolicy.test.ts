@@ -4,7 +4,7 @@ import { staffingWindows, workloadAt } from "../staffing";
 import { boundaryRestDays } from "../scheduler";
 import type { Shift } from "../../types";
 import { describe, it, expect } from "vitest";
-import { isOptionalCoverageTime, missingRestaurantRoles, RESTAURANT_POLICY } from "../restaurantPolicy";
+import { compareStaffingPriority, isOptionalCoverageTime, missingRestaurantRoles, RESTAURANT_POLICY } from "../restaurantPolicy";
 import { applyReportedHistory } from "../history";
 import { createSampleSchedule } from "../sampleData";
 describe("An Sushibar policy",()=>{
@@ -47,17 +47,22 @@ describe("An Sushibar policy",()=>{
   expect(missingRestaurantRoles(1,0,1)).toBe(0);
   expect(missingRestaurantRoles(1,1,0)).toBe(0);
  });
- it("permits zero staff only from 14:00 until 16:00",()=>{
+ it("keeps afternoon coverage as a fallback after other opening slots",()=>{
   expect(isOptionalCoverageTime(839)).toBe(false);
   expect(isOptionalCoverageTime(840)).toBe(true);
   expect(isOptionalCoverageTime(959)).toBe(true);
   expect(isOptionalCoverageTime(960)).toBe(false);
   for(const weekday of RESTAURANT_POLICY.peak.weekdays){
    const windows=staffingWindows([{startMinutes:630,endMinutes:1260}],weekday);
-   expect(windows.some(w=>w.startMinutes<960 && w.endMinutes>840 && w.minStaff>0)).toBe(false);
-   expect(windows.some(w=>w.startMinutes===630 && w.endMinutes===840 && w.minStaff===2)).toBe(true);
-   expect(windows.some(w=>w.startMinutes===960 && w.endMinutes===1260 && w.minStaff===2)).toBe(true);
+   expect(windows.some(w=>w.startMinutes===630 && w.endMinutes===1260 && w.minStaff===2)).toBe(true);
   }
+ });
+ it("protects other opening slots, then afternoon coverage, before soft peaks",()=>{
+  expect(compareStaffingPriority([0,100,100,100],[1,0,0,0])).toBeLessThan(0);
+  expect(compareStaffingPriority([0,0,100,100],[0,1,0,0])).toBeLessThan(0);
+  expect(compareStaffingPriority([0,0,0,100],[0,0,1,0])).toBeLessThan(0);
+  expect(compareStaffingPriority([0,0,0,1],[0,0,0,2])).toBeLessThan(0);
+  expect(compareStaffingPriority([1,2,3,4],[1,2,3,4])).toBe(0);
  });
  it("has the evening peak every day",()=>{
   for (const weekday of RESTAURANT_POLICY.peak.weekdays) {

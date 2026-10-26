@@ -1,3 +1,41 @@
+# Mới nhất: ưu tiên phủ, dồn phần thiếu vào 14:00–16:00
+
+14:00–16:00 vẫn có mục tiêu một bếp/một bồi; không chủ động bỏ trống. Khi nguồn giờ/ràng buộc không cho phủ hết, lịch ưu tiên bảo vệ các khung khác, rồi giảm thiếu chiều, sau đó mới thêm người cao điểm T6/T7 và ngày thường. Nhu cầu chiều không đặt bằng 0. Debug vẫn giữ số người thực và chữ Chủ ở ô không có nhân viên.
+
+Thứ tự lịch tốt nhất gồm bốn mức độc lập: thiếu bộ phận ngoài 14:00–16:00; thiếu bộ phận trong 14:00–16:00; thiếu người thêm cao điểm T6/T7; thiếu người thêm cao điểm ngày thường. Điểm mềm dùng để tìm kiếm; chọn kết quả và chỉnh ca cuối phải tuân thủ thứ tự này.
+
+Tháng 10/2026 mẫu: ngoài khung chiều thiếu 4 giờ, đều sau 19:30; cao điểm 17:00–19:30 không thiếu bếp/bồi cơ bản; thiếu chiều 23,5 giờ. Người thứ ba cao điểm còn thiếu 5 giờ-người T6/T7 và 42,5 giờ-người ngày thường. Không nhầm thiếu người thứ ba với không có bếp hoặc bồi. Giữ đủ 656 giờ và các giới hạn ngày/tuần. Chưa đối chiếu được dữ liệu trình duyệt đang lưu.
+
+10 kiểm thử đạt (tháng 10 và chính sách), build đạt. Không tuyên bố đã phủ kín hoặc chứng minh tối ưu toàn cục.
+
+Các phần dưới là lịch sử yêu cầu trước.
+
+---
+
+# Cơ chế mới nhất: phủ cả ngày trước mọi cao điểm
+
+Yêu cầu mới bỏ ngoại lệ không cần nhân viên 14:00–16:00. Toàn bộ 10:30–21:00 cần bếp/bồi; chủ không cộng vào độ phủ. Không tự đổi trần 8 giờ công/ngày hoặc giờ hợp đồng.
+
+Bộ tìm kiếm vẫn dùng điểm mềm để khám phá, nhưng lưu lịch tốt nhất bằng bộ ba so sánh theo thứ tự tuyệt đối: tổng ô thiếu bộ phận, ô thiếu người cao điểm T6/T7, rồi ngày thường. Các bước chỉnh ca cuối dùng cùng thứ tự; không đánh đổi thêm ô thiếu cơ bản để giảm thiếu cao điểm. Đã thêm kiểm thử so sánh thứ tự này.
+
+Dữ liệu mẫu tháng 10/2026: thiếu bộ phận 33,5 giờ, trong đó 4,5 giờ sau 19:30; thiếu người thứ ba cao điểm T6/T7 5 giờ-người, ngày thường 36,5 giờ-người. Cả 656 giờ hợp đồng được giữ, không lỗi cứng. Đây không phải lịch đã phủ kín; số liệu 4 giờ thiếu ở phiên bản trước chỉ áp dụng khi 14:00–16:00 được phép trống.
+
+18 kiểm thử đạt (tháng 10 và policy/coverage/roles), build đạt. Chưa đối chiếu được 13 ô trên lịch đang lưu của người dùng vì công cụ trình duyệt không hoạt động; không dùng số liệu mẫu để khẳng định đó là lịch hiện tại.
+
+Các phần dưới là lịch sử các yêu cầu trước.
+
+---
+
+# Ưu tiên cao điểm T6/T7 sau phủ cơ bản
+
+Cao điểm là mục tiêu mềm. Mọi ô bắt buộc phải có bếp/bồi được ưu tiên trước; phần giờ dư ưu tiên thêm người 17:00–19:30 thứ Sáu/thứ Bảy, sau đó mới ngày thường. Không khôi phục cân giờ theo hệ số ngày. Thứ trong tuần xác định từ ngày lịch thực tế, không đổi theo ngày lễ.
+
+Kiểm thử tháng 10/2026: tổng thiếu phủ cơ bản giữ 4 giờ, không thiếu bếp sáng; cao điểm T6/T7 không thiếu người thứ ba; cao điểm ngày thường còn thiếu 21,5 giờ-người. Tổng thiếu cao điểm giảm từ 26,5 xuống 21,5 giờ-người. Đủ giờ từng hợp đồng, không lỗi cứng được kiểm tra. Không khẳng định mọi tháng đạt phủ cao điểm hoàn toàn.
+
+Các phần dưới là lịch sử phiên bản trước.
+
+---
+
 # Điều chỉnh mới nhất: 14:00–16:00
 
 Khung có thể không bố trí nhân viên thu hẹp từ 14:00–17:00 thành 14:00–16:00. Từ 16:00 cần ít nhất một bếp và một bồi; cao điểm giữ 17:00–19:30. Cập nhật đồng bộ chính sách, thuật toán, debug, khung nhu cầu và kiểm thử. Ca tách chỉ được nghỉ trong khung mới.
