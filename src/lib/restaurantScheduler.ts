@@ -1178,7 +1178,12 @@ export function completeContractHours(input: WeeklyInput, initial: Shift[]): Shi
  rebalance();
  result = exchangeRoleHours(result,employees,days,holidays,balancedTargets,ctx);
  result = polishRestaurantPairs(result,employees,days,holidays,balancedTargets,ctx);
- return improveCoverage(result,employees,days,holidays,balancedTargets,ctx).sort((a,b)=>a.date.localeCompare(b.date)||a.startMinutes-b.startMinutes||a.employeeId.localeCompare(b.employeeId));
+ result = improveCoverage(result,employees,days,holidays,balancedTargets,ctx);
+ result = repairCoverageTransfers(result,employees,days,holidays,balancedTargets,ctx);
+ result = repairCoverageTransfers(result,employees,days,holidays,balancedTargets,ctx,true);
+ result = relocateRestDays(result,employees,days,holidays,balancedTargets,ctx,true);
+ result = exchangeRoleHours(result,employees,days,holidays,balancedTargets,ctx,true);
+ return result.sort((a,b)=>a.date.localeCompare(b.date)||a.startMinutes-b.startMinutes||a.employeeId.localeCompare(b.employeeId));
 }
 
 /** Simultaneous role handovers escape the one-person-at-a-time local minimum. */
@@ -1214,10 +1219,20 @@ function polishRestaurantPairs(result: Shift[], employees: Employee[], days: Map
  return output;
 }
 
+/** Department coverage comes before the optional third peak worker. */
+function coveragePriorityCost(shifts:Shift[],blocks:DayBlocks,ctx:Ctx):number {
+ let closing=0,peak=0;
+ for(const block of blocks)for(let t=block.startMinutes;t<block.endMinutes;t+=SLOT){
+  if(t>=PEAK_END)closing+=restaurantRoleShortage(shifts,t,ctx)*SLOT;
+  if(t>=PEAK_START && t<PEAK_END)peak+=Math.max(0,RESTAURANT_POLICY.peakStaff-shifts.filter(s=>workingAt(s,t)).length)*SLOT;
+ }
+ return roleGapMinutes(shifts,blocks,ctx)*1e9+closing*1e6+peak*1000;
+}
+
 /** Exchange hours on two dates together: preserve both contracts and daily totals.
  * A one-person move cannot repair a long shift's uncovered break when another
  * employee must receive those hours on the same day. */
-function exchangeRoleHours(result: Shift[], employees: Employee[], days: Map<string, Day>, holidays: Set<string>, targets: Map<string, number>, ctx: Ctx): Shift[] {
+function exchangeRoleHours(result: Shift[], employees: Employee[], days: Map<string, Day>, holidays: Set<string>, targets: Map<string, number>, ctx: Ctx, coverageFirst=false): Shift[] {
  const dates=[...days].filter(([,day])=>!day.closed).map(([date])=>date);
  for(let pass=0;pass<20;pass++) {
   let best: {shifts:Shift[];gain:number} | undefined;
@@ -1232,7 +1247,7 @@ function exchangeRoleHours(result: Shift[], employees: Employee[], days: Map<str
     const paidA=ownA.reduce((n,s)=>n+s.paidMinutes,0),paidB=ownB.reduce((n,s)=>n+s.paidMinutes,0);
     if(!paidA && !paidB) continue;
     const rest=onDay.filter(s=>s.employeeId!==a.id && s.employeeId!==b.id);
-    const before=dayCost(onDay,day.blocks,weekday,targets.get(date),ctx);
+    const before=coverageFirst ? coveragePriorityCost(onDay,days.get(date)!.blocks,ctx) : dayCost(onDay,day.blocks,weekday,targets.get(date),ctx);
     const options=(employee:Employee,paid:number):Option[]=>{
      if(!paid) return [{shifts:[],styleCost:0}];
      if(paid<MIN_SHIFT || paid>MAX_PAID || !mayWorkOn(employee,date) || ctx.blocked.get(employee.id)?.has(date)) return [];
@@ -1245,7 +1260,7 @@ function exchangeRoleHours(result: Shift[], employees: Employee[], days: Map<str
      let shifts:Shift[]|undefined,cost=Infinity;
      for(const x of optionsA) for(const y of optionsB) {
       const next=[...rest,...x.shifts,...y.shifts];
-      const value=dayCost(next,day.blocks,weekday,targets.get(date),ctx);
+      const value=coverageFirst ? coveragePriorityCost(next,days.get(date)!.blocks,ctx) : dayCost(next,day.blocks,weekday,targets.get(date),ctx);
       if(value<cost) {cost=value;shifts=next;}
      }
      if(shifts) candidates.set(delta,[...(candidates.get(delta) ?? []),{date,shifts,gain:before-cost}]);
@@ -1277,10 +1292,15 @@ function exchangeRoleHours(result: Shift[], employees: Employee[], days: Map<str
 
 /** Move a day off together with a colleague's hours. Neither independent move
  * need improve coverage; accept only the combined improvement, keeping contracts. */
-function relocateRestDays(result: Shift[], employees: Employee[], days: Map<string,Day>, holidays: Set<string>, targets: Map<string,number>, ctx: Ctx): Shift[] {
+function relocateRestDays(result: Shift[], employees: Employee[], days: Map<string,Day>, holidays: Set<string>, targets: Map<string,number>, ctx: Ctx, coverageFirst=false): Shift[] {
+ const costOf=(shifts:Shift[],date:string)=>{
+  const day=days.get(date)!;
+  if(!coverageFirst)return dayCost(shifts,day.blocks,effectiveWeekdayKey(date,holidays),targets.get(date),ctx);
+  return coveragePriorityCost(shifts,day.blocks,ctx);
+ };
  const dates=[...days].filter(([,day])=>!day.closed).map(([date])=>date);
  const movable=employees.filter(e=>!e.fixedShift && e.weeklyHours==null);
- for(let pass=0;pass<8;pass++) {
+ for(let pass=0;pass<(coverageFirst ? 32 : 8);pass++) {
   let best:{shifts:Shift[];gain:number}|undefined;
   for(const a of movable) for(const b of movable) {
    if(a===b || a.workRole!==b.workRole || a.workRole==="BOTH") continue;
@@ -1301,7 +1321,7 @@ function relocateRestDays(result: Shift[], employees: Employee[], days: Map<stri
     let bestDay:{shifts:Shift[];cost:number}|null=null;
     for(const x of options(a,paidA)) for(const y of options(b,paidB)) {
      const shifts=[...rest,...x.shifts,...y.shifts];
-     const cost=dayCost(shifts,day.blocks,weekday,targets.get(date),ctx);
+     const cost=costOf(shifts,date);
      if(!bestDay || cost<bestDay.cost) bestDay={shifts,cost};
     }
     cache.set(key,bestDay);return bestDay;
@@ -1317,10 +1337,14 @@ function relocateRestDays(result: Shift[], employees: Employee[], days: Map<stri
      if([...nextWorked].some(date=>consecutiveRunLengthWith(nextWorked,date)>6)) continue;
      if([...nextWorked].filter(date=>weekStartOf(date)===weekStartOf(to)).length>dayLimit(a)) continue;
      const bFrom=paidOf(b.id,from);
-     // B keeps both workdays, so its availability and rest pattern stay fixed.
-     if(!bFrom) continue;
+     // Opening another workday for B requires its own availability/rest check.
+     if(!bFrom){
+      if(!coverageFirst || !mayWorkOn(b,from) || ctx.blocked.get(b.id)?.has(from))continue;
+      const bWorked=new Set(result.filter(s=>s.employeeId===b.id).map(s=>s.date));bWorked.add(from);
+      if([...bWorked].some(date=>consecutiveRunLengthWith(bWorked,date)>6) || [...bWorked].filter(date=>weekStartOf(date)===weekStartOf(from)).length>dayLimit(b))continue;
+     }
      const paidA=paidOf(a.id,from);
-     const before=[from,to].reduce((n,date)=>n+dayCost(result.filter(s=>s.date===date),days.get(date)!.blocks,effectiveWeekdayKey(date,holidays),targets.get(date),ctx),0);
+     const before=[from,to].reduce((n,date)=>n+costOf(result.filter(s=>s.date===date),date),0);
      for(let transfer=SLOT;transfer<=Math.min(bTo-MIN_SHIFT,MAX_PAID-bFrom);transfer+=SLOT) {
       const dest=place(to,paidA,bTo-transfer),source=place(from,0,bFrom+transfer);
       if(!dest || !source) continue;
@@ -1332,6 +1356,108 @@ function relocateRestDays(result: Shift[], employees: Employee[], days: Map<stri
   }
   if(!best) break;
   result=best.shifts;
+ }
+ return result;
+}
+
+/** Repair small handover/closing gaps after monthly balancing. Move paid time,
+ * not contract budgets; existing workdays stay fixed, preserving rest patterns. */
+function repairCoverageTransfers(result:Shift[],employees:Employee[],days:Map<string,Day>,holidays:Set<string>,targets:Map<string,number>,ctx:Ctx,morningPriority=false):Shift[] {
+ const dates=[...days].filter(([,day])=>!day.closed).map(([date])=>date);
+ const metrics=(shifts:Shift[],date:string)=>{
+  const day=days.get(date)!;
+  let role=0,closing=0,peak=0,morning=0;
+  for(const block of day.blocks)for(let t=block.startMinutes;t<block.endMinutes;t+=SLOT){
+   const missing=restaurantRoleShortage(shifts,t,ctx);
+   role+=missing*SLOT;
+   if(morningPriority && t<780 && !shifts.some(s=>ctx.roles.get(s.employeeId)==="KITCHEN" && workingAt(s,t)))morning+=SLOT;
+   if(t>=PEAK_END)closing+=missing*SLOT;
+   if(t>=PEAK_START && t<PEAK_END)peak+=Math.max(0,RESTAURANT_POLICY.peakStaff-shifts.filter(s=>workingAt(s,t)).length)*SLOT;
+  }
+  const long=shifts.reduce((n,s)=>n+(Math.max(0,s.paidMinutes-360)/SLOT)**2,0);
+  return {role,closing,peak,morning,long};
+ };
+ const initialRole=dates.reduce((n,date)=>n+metrics(result.filter(s=>s.date===date),date).role,0);
+ const initialPeak=dates.reduce((n,date)=>n+metrics(result.filter(s=>s.date===date),date).peak,0);
+ const byDate=new Map(dates.map(date=>[date,result.filter(s=>s.date===date)]));
+ const before=new Map(dates.map(date=>[date,metrics(byDate.get(date)!,date)]));
+ // Day placements depend only on that day's shifts: retain unaffected entries.
+ const cache=new Map<string,{shifts:Shift[];m:ReturnType<typeof metrics>;cost:number}|undefined>();
+ for(let pass=0;pass<16;pass++){
+  const totalPeak=[...before.values()].reduce((n,m)=>n+m.peak,0);
+  const roleSaved=initialRole-[...before.values()].reduce((n,m)=>n+m.role,0);
+  const place=(date:string,employee:Employee,paid:number)=>{
+   const key=`${date}:${employee.id}:${paid}`;
+   if(cache.has(key))return cache.get(key);
+   const day=days.get(date)!,weekday=effectiveWeekdayKey(date,holidays),onDay=byDate.get(date)!;
+   const colleague=employees.find(e=>e.id!==employee.id && !e.fixedShift && e.workRole===employee.workRole && onDay.some(s=>s.employeeId===e.id));
+   const others=onDay.filter(s=>s.employeeId!==employee.id && s.employeeId!==colleague?.id);
+   const colleaguePaid=onDay.filter(s=>s.employeeId===colleague?.id).reduce((n,s)=>n+s.paidMinutes,0);
+   const placements=(person:Employee,minutes:number)=>{
+    const options=optionsFor(person,date,minutes,day.blocks,true,weekday,ctx);
+    if(!morningPriority || employee.workRole!=="KITCHEN")return options;
+    return options.flatMap(option=>option.shifts.length===1 && option.shifts[0].pauseMinutes>0
+     ? pauseStartCandidates(option.shifts[0].startMinutes,option.shifts[0].endMinutes,option.shifts[0].pauseMinutes).map(pauseStartMinutes=>({...option,shifts:[{...option.shifts[0],pauseStartMinutes}]})) : [option]);
+   };
+   const otherOptions=colleague ? placements(colleague,colleaguePaid) : [{shifts:[],styleCost:0}];
+   let best:{shifts:Shift[];m:ReturnType<typeof metrics>;cost:number}|undefined;
+   for(const a of placements(employee,paid))for(const b of otherOptions){
+    const shifts=[...others,...a.shifts,...b.shifts],m=metrics(shifts,date);
+    const cost=m.role*1e9+m.closing*1e6+m.peak*10000+m.morning*10+m.long+dayCost(shifts,day.blocks,weekday,targets.get(date),ctx)/1e7;
+    if(!best || cost<best.cost)best={shifts,m,cost};
+   }
+   cache.set(key,best);return best;
+  };
+  let best:{shifts:Shift[];gain:number;dates:string[]}|undefined;
+  for(const date of dates)for(const employee of employees){
+   if(employee.fixedShift || employee.workRole==="BOTH")continue;
+   const old=before.get(date)!;
+   if(!old.role)continue;
+   const paid=byDate.get(date)!.filter(s=>s.employeeId===employee.id).reduce((n,s)=>n+s.paidMinutes,0);
+   if(!paid)continue;
+   const next=place(date,employee,paid);
+   if(!next)continue;
+   const roleGain=old.role-next.m.role,closingGain=old.closing-next.m.closing,peakGain=old.peak-next.m.peak;
+   const morningGain=old.morning-next.m.morning;
+   if(roleGain<0 || closingGain<0 || morningGain<0 || totalPeak-peakGain>initialPeak+(morningPriority ? roleSaved+roleGain : 0) || (roleGain===0 && closingGain===0 && (morningGain<=0 || peakGain<0)))continue;
+   const gain=roleGain*1e9+closingGain*1e6+peakGain*10000+morningGain*10;
+   if(!best || gain>best.gain)best={shifts:[...result.filter(s=>s.date!==date),...next.shifts],gain,dates:[date]};
+  }
+
+  for(const to of dates.filter(date=>!morningPriority && before.get(date)!.role>0))for(const employee of employees){
+   if(employee.fixedShift || employee.workRole==="BOTH")continue;
+   const destPaid=byDate.get(to)!.filter(s=>s.employeeId===employee.id).reduce((n,s)=>n+s.paidMinutes,0);
+   if(!destPaid)continue;
+   for(const amount of [SLOT,2*SLOT,3*SLOT,4*SLOT]){
+   if(destPaid+amount>MAX_PAID)continue;
+   const dest=place(to,employee,destPaid+amount);
+   if(!dest || dest.m.role>before.get(to)!.role)continue;
+   for(const from of dates){
+    if(from===to || (employee.weeklyHours!=null && weekStartOf(from)!==weekStartOf(to)))continue;
+    const sourcePaid=byDate.get(from)!.filter(s=>s.employeeId===employee.id).reduce((n,s)=>n+s.paidMinutes,0);
+    if(sourcePaid-amount<MIN_SHIFT)continue;
+    const source=place(from,employee,sourcePaid-amount);
+    if(!source)continue;
+    const oldA=before.get(from)!,oldB=before.get(to)!;
+    const roleGain=oldA.role+oldB.role-source.m.role-dest.m.role;
+    const closingGain=oldA.closing+oldB.closing-source.m.closing-dest.m.closing;
+    const peakGain=oldA.peak+oldB.peak-source.m.peak-dest.m.peak;
+    const morningGain=oldA.morning+oldB.morning-source.m.morning-dest.m.morning;
+    const longGain=oldA.long+oldB.long-source.m.long-dest.m.long;
+    // Coverage precedes the preference for 4–6h shifts.
+    if(roleGain<0 || closingGain<0 || morningGain<0 || totalPeak-peakGain>initialPeak || (roleGain===0 && closingGain===0 && (peakGain<0 || (morningGain===0 && longGain<=0))))continue;
+    const gain=roleGain*1e9+closingGain*1e6+peakGain*10000+morningGain*10+longGain;
+    if(!best || gain>best.gain)best={shifts:[...result.filter(s=>s.date!==from && s.date!==to),...source.shifts,...dest.shifts],gain,dates:[from,to]};
+   }
+   }
+  }
+  if(!best)break;
+  result=best.shifts;
+  for(const date of best.dates){
+   const shifts=result.filter(s=>s.date===date);
+   byDate.set(date,shifts);before.set(date,metrics(shifts,date));
+   for(const key of cache.keys())if(key.startsWith(`${date}:`))cache.delete(key);
+  }
  }
  return result;
 }

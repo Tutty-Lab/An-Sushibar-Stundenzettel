@@ -13,6 +13,7 @@ import { resolveDay } from "./workHours";
 import { mayWorkOn } from "./availability";
 import { employeeForMonth } from "./history";
 import { generateWeeklySchedule, completeContractHours } from "./restaurantScheduler";
+import { canOptimizeMonth, optimizeMonth } from "./monthOptimizer";
 
 export type GenerateInput = {
   adjacentShifts?: readonly Shift[];
@@ -61,10 +62,15 @@ export function boundaryRestDays(input: GenerateInput): Record<string, readonly 
   }
   return blocked;
 }
+/** Tối ưu cả tháng; bộ xếp theo tuần cũ chỉ còn cho ca cố định / ngày nhiều khối. */
+function solve(input: GenerateInput): Shift[] {
+  if (canOptimizeMonth(input)) return assignShiftRoles(optimizeMonth(input), input.employees);
+  return assignShiftRoles(completeContractHours(input, enforceRest(generateWeeklySchedule(input))), input.employees);
+}
 export function generateSchedule(input: GenerateInput): Shift[] {
   input = { ...input, blockedDays: boundaryRestDays(input) };
   const pair = input.employees.filter(e => ["ansushibar-5", "ansushibar-6"].includes(e.id)).sort((a,b) => a.id.localeCompare(b.id));
-  if (pair.length !== 2) return assignShiftRoles(completeContractHours(input, enforceRest(generateWeeklySchedule(input))), input.employees);
+  if (pair.length !== 2) return solve(input);
   const blockedDays = { ...input.blockedDays };
   for (const [index, employee] of pair.entries()) {
     const blocked = new Set(blockedDays[employee.id] ?? []);
@@ -87,5 +93,5 @@ export function generateSchedule(input: GenerateInput): Shift[] {
     blockedDays[employee.id] = [...blocked];
   }
   const configured = { ...input, blockedDays };
-  return assignShiftRoles(completeContractHours(configured, enforceRest(generateWeeklySchedule(configured))), input.employees);
+  return solve(configured);
 }
