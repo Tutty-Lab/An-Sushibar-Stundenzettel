@@ -31,8 +31,8 @@ function addDaysIso(isoDate: string, days: number): string {
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
 
-/** Offene Tage je Woche: Mo–Sa, der Sonntag ist zu. */
-export const OPEN_DAYS_PER_WEEK = 6;
+/** An Sushibar mở cả 7 ngày; hợp đồng theo tuần chia đều cho 7 ngày mở. */
+export const OPEN_DAYS_PER_WEEK = 7;
 export const SCHEDULE_SLOT_MINUTES = 30;
 /** Höchste bezahlte Zeit je Tag (§ 3 ArbZG, siehe validation.ts). */
 export const MAX_PAID_MINUTES_PER_DAY = 8 * 60;
@@ -43,7 +43,7 @@ export function contractOpenDays(openDaysByWeek: readonly number[]): number {
 }
 
 /**
- * Monats-Soll in Minuten über eine Anzahl offener Tage (Tagesanteil 1/6 je Tag).
+ * Monats-Soll in Minuten über eine Anzahl offener Tage (Tagesanteil 1/7 je Tag).
  * Nur noch für Personen ohne Datumsliste (Altpfad, einzelne Tests); Scheduler,
  * Prüfung und Anzeige rechnen mit monthlyTargetMinutesFor.
  */

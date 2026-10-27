@@ -5,10 +5,9 @@ import { splitTargetHours } from "../lib/splitTargetHours";
 import { WEEKDAY_SHORT_VI, type WeekdayKey } from "../lib/demand";
 import { monthlyTargetMinutesFor } from "../lib/contract";
 import { employmentShortVi } from "../lib/employment";
-import { minutesToShortHours, minutesToTime, timeToMinutes } from "../lib/time";
+import { minutesToShortHours } from "../lib/time";
 import type { WorkHoursConfig } from "../lib/workHours";
 import { currentPartners, linkPatches, type PartnerChoice, type StoreRoster } from "../lib/sharedPerson";
-import { describePreferredWindow, ownShiftRangeMinutes, preferredWindowsOf } from "../lib/preferredWindows";
 
 // text-base (16px) auf dem Handy: iOS zoomt sonst beim Tippen hinein.
 const inputClass =
@@ -22,8 +21,6 @@ const inputClass =
  */
 const ADVANCED_EDITABLE = true;
 
-const FIXED_START_DEFAULT = "06:30";
-const FIXED_END_DEFAULT = "14:30";
 
 const WEEKDAY_ORDER: WeekdayKey[] = [
   "monday",
@@ -65,15 +62,6 @@ export type Draft = {
   maxDays: string;
   /** „Ngày nghỉ cố định" – die Kehrseite von availableWeekdays. */
   daysOff: WeekdayKey[];
-  fixed: boolean;
-  fixedStart: string; // "HH:MM"
-  fixedEnd: string; // "HH:MM"
-  /** Ngày lễ bắt buộc có mặt (Shin: Bá Việt Nguyen). */
-  holidayDuty: boolean;
-  shiftMin: string;
-  shiftMax: string;
-  spreadEvenly: boolean;
-  windows: { days: WeekdayKey[]; start: string; end: string }[];
   startDate: string; // "yyyy-MM-dd" hoặc "" = từ đầu tháng
   endDate: string; // "yyyy-MM-dd" hoặc "" = vẫn đang làm
   /** Cùng một người ở tiệm khác: storeId -> employeeId ("" = không). */
@@ -97,55 +85,10 @@ export function draftFrom(emp?: Employee, partners: PartnerChoice = {}): Draft {
     hours: emp ? hoursText(emp.weeklyHours ?? Math.round((emp.targetMinutes / 60) * 100) / 100) : "169",
     maxDays: emp?.maxDaysPerWeek ? String(Math.min(6, emp.maxDaysPerWeek)) : "",
     daysOff: available && available.length > 0 ? WEEKDAY_ORDER.filter((day) => !available.includes(day)) : [],
-    fixed: !!emp?.fixedShift,
-    // Vorhandene feste Schicht übernehmen, sonst die Voreinstellung anzeigen.
-    fixedStart: emp?.fixedShift ? minutesToTime(emp.fixedShift.startMinutes) : FIXED_START_DEFAULT,
-    fixedEnd: emp?.fixedShift ? minutesToTime(emp.fixedShift.endMinutes) : FIXED_END_DEFAULT,
-    holidayDuty: emp?.requiredOnHolidays ?? false,
-    shiftMin: emp?.shiftHours ? hoursText(emp.shiftHours.min) : "",
-    shiftMax: emp?.shiftHours ? hoursText(emp.shiftHours.max) : "",
-    spreadEvenly: emp?.spreadEvenly === true,
-    windows: (emp?.preferredWindows ?? []).map((w) => ({
-      days: [...w.days],
-      start: minutesToTime(w.startMinutes),
-      end: minutesToTime(w.endMinutes),
-    })),
     startDate: emp?.startDate ?? "",
     endDate: emp?.endDate ?? "",
     partners,
   };
-}
-
-/** Wandelt "HH:MM" in Minuten; bei Unsinn die Voreinstellung. */
-function safeMinutes(time: string, fallback: string): number {
-  try {
-    return timeToMinutes(time);
-  } catch {
-    return timeToMinutes(fallback);
-  }
-}
-
-/** „Độ dài ca" aus dem Formular: beide Werte > 0, sonst nicht gesetzt. */
-function shiftHoursFromDraft(d: Draft): Employee["shiftHours"] {
-  const min = parseHours(d.shiftMin);
-  const max = parseHours(d.shiftMax);
-  if (!(min > 0) || !(max > 0)) return undefined;
-  return { min: Math.min(min, max), max: Math.max(min, max) };
-}
-
-/** Nur vollständige Khung giờ (mind. ein Tag, Ende nach Beginn). */
-function windowsFromDraft(d: Draft): Employee["preferredWindows"] {
-  const out = d.windows.flatMap((w) => {
-    try {
-      const startMinutes = timeToMinutes(w.start);
-      const endMinutes = timeToMinutes(w.end);
-      if (w.days.length === 0 || endMinutes <= startMinutes) return [];
-      return [{ days: WEEKDAY_ORDER.filter((x) => w.days.includes(x)), startMinutes, endMinutes }];
-    } catch {
-      return [];
-    }
-  });
-  return out.length > 0 ? out : undefined;
 }
 
 /** Reject invalid edits explicitly rather than silently dropping input. */
@@ -158,13 +101,6 @@ export function draftErrors(d: Draft): string[] {
   if (d.daysOff.length === 7) errors.push("Không thể chọn nghỉ cả 7 ngày.");
   if (d.startDate && d.endDate && d.endDate < d.startDate) errors.push("Ngày nghỉ việc phải từ ngày vào làm trở đi.");
   if (d.vacations.some(v=>!v.start || !v.end || v.end < v.start)) errors.push("Điền đủ ngày nghỉ phép, ngày kết thúc không trước ngày bắt đầu.");
-  if (d.shiftMin || d.shiftMax) {
-    const min=parseHours(d.shiftMin), max=parseHours(d.shiftMax);
-    if (!Number.isFinite(min) || !Number.isFinite(max) || min < 3 || max > 8 || max < min) errors.push("Độ dài ca cần đủ hai số, từ 3 đến 8 giờ, từ nhỏ đến lớn.");
-  }
-  const validTime=(start:string,end:string)=>{try{return timeToMinutes(end)>timeToMinutes(start);}catch{return false;}};
-  if(d.fixed && !validTime(d.fixedStart,d.fixedEnd)) errors.push("Ca cố định cần giờ kết thúc sau giờ bắt đầu.");
-  if(d.windows.some(w=>!w.days.length || !validTime(w.start,w.end))) errors.push("Mỗi khung ưu tiên cần chọn ngày, giờ kết thúc sau giờ bắt đầu.");
   return errors;
 }
 
@@ -174,8 +110,6 @@ export function draftToEmployee(d: Draft): Omit<Employee, "id"> {
   if (errors.length) throw new Error(errors.join(" "));
   const hours = Math.max(0, parseHours(d.hours) || 0);
   const tage = Number(d.maxDays);
-  const fixedStart = safeMinutes(d.fixedStart, FIXED_START_DEFAULT);
-  const fixedEnd = safeMinutes(d.fixedEnd, FIXED_END_DEFAULT);
   const available = WEEKDAY_ORDER.filter((day) => !d.daysOff.includes(day));
   return {
     vacations: d.vacations,
@@ -186,18 +120,15 @@ export function draftToEmployee(d: Draft): Omit<Employee, "id"> {
     // Monats-Soll wird je Monat daraus abgeleitet (contract.ts).
     targetMinutes: d.unit === "month" ? Math.round(hours * 60) : 0,
     weeklyHours: d.unit === "week" ? hours : undefined,
-    // Ende muss nach Beginn liegen – sonst die feste Schicht ignorieren, statt
-    // eine kaputte Zeitspanne zu speichern.
-    fixedShift:
-      d.fixed && fixedEnd > fixedStart
-        ? { startMinutes: fixedStart, endMinutes: fixedEnd }
-        : undefined,
     availableWeekdays: d.daysOff.length === 0 || available.length === 0 ? undefined : available,
     maxDaysPerWeek: d.maxDays === "" || tage < 1 ? undefined : Math.min(6, Math.round(tage)),
-    requiredOnHolidays: d.holidayDuty ? true : undefined,
-    shiftHours: shiftHoursFromDraft(d),
-    spreadEvenly: d.spreadEvenly ? true : undefined,
-    preferredWindows: windowsFromDraft(d),
+    // Luật của tiệm khác (ca cố định, trực lễ, độ dài ca, khung ưu tiên) không dùng ở An:
+    // lưu lại sẽ xoá giá trị cũ còn sót.
+    fixedShift: undefined,
+    requiredOnHolidays: undefined,
+    shiftHours: undefined,
+    spreadEvenly: undefined,
+    preferredWindows: undefined,
     // Leeres Feld = von Monatsanfang an dabei (kein Eintrittsdatum).
     startDate: /^\d{4}-\d{2}-\d{2}$/.test(d.startDate) ? d.startDate : undefined,
     // Leeres Feld = arbeitet weiter (kein Austritt).
@@ -358,7 +289,6 @@ function EmployeeSummaryRow({
   // Giờ của tháng này theo bảng lương (history.ts) thay cho hợp đồng chung.
   const monatH = monatMin / 60;
   const info = splitInfo(monatH, emp.employmentType);
-  const ownRange = ownShiftRangeMinutes(emp);
 
   // Inhaberin: immer im Laden, ohne Vertrag und ohne Stundenzettel (scheduler.ts).
   if (emp.isOwner) {
@@ -394,15 +324,6 @@ function EmployeeSummaryRow({
         {sharedWith.length > 0 ? (
           <span className="rounded bg-sky-50 text-sky-800 px-1.5 py-0.5">cũng làm ở {sharedWith.join(", ")}</span>
         ) : null}
-        {emp.requiredOnHolidays ? (
-          <span className="rounded bg-amber-50 text-amber-800 px-1.5 py-0.5">trực ngày lễ</span>
-        ) : null}
-        {emp.fixedShift ? (
-          <span className="rounded bg-indigo-50 text-indigo-700 px-1.5 py-0.5">
-            ca cố định {minutesToTime(emp.fixedShift.startMinutes)}–
-            {minutesToTime(emp.fixedShift.endMinutes)}
-          </span>
-        ) : null}
         {emp.maxDaysPerWeek ? (
           <span className="rounded bg-slate-100 text-slate-600 px-1.5 py-0.5">{Math.min(6, emp.maxDaysPerWeek)} ngày/tuần</span>
         ) : null}
@@ -411,17 +332,6 @@ function EmployeeSummaryRow({
             nghỉ {WEEKDAY_ORDER.filter((x) => !emp.availableWeekdays!.includes(x)).map((x) => WEEKDAY_SHORT_VI[x]).join(", ")}
           </span>
         ) : null}
-        {ownRange ? (
-          <span className="rounded bg-teal-50 text-teal-800 px-1.5 py-0.5">
-            ca {minutesToShortHours(ownRange.min)}–{minutesToShortHours(ownRange.max)}
-            {emp.spreadEvenly ? " · rải đều" : ""}
-          </span>
-        ) : null}
-        {preferredWindowsOf(emp).map((w, i) => (
-          <span key={i} className="rounded bg-teal-50 text-teal-800 px-1.5 py-0.5">
-            {describePreferredWindow(w)}
-          </span>
-        ))}
       </div>
     </div>
   );
@@ -504,33 +414,6 @@ function SheetSection({ title, children }: { title: string; children: React.Reac
   );
 }
 
-/** Ja/Nein-Zeile mit Erklärung darunter. */
-function CheckRow({
-  label,
-  note,
-  checked,
-  onChange,
-}: {
-  label: string;
-  note?: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2.5">
-      <span className="text-sm text-slate-700">
-        {label}
-        {note && <span className="block text-xs text-slate-400">{note}</span>}
-      </span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-6 w-6 shrink-0 rounded border-slate-300"
-      />
-    </label>
-  );
-}
 
 /** Sieben Tagesknöpfe T2…CN. */
 function DayButtons({
@@ -602,13 +485,6 @@ function EmployeeSheet({
   const errors = draftErrors(d);
   const vacationBad = d.vacations.some(v=>!v.start || !v.end || v.end < v.start);
   const info = splitInfo(monatMin / 60, d.employmentType);
-  const shiftMinH = parseHours(d.shiftMin);
-  const shiftMaxH = parseHours(d.shiftMax);
-  const shiftRangeOff =
-    (d.shiftMin !== "" || d.shiftMax !== "") &&
-    (!(shiftMinH > 0) || !(shiftMaxH > 0) || shiftMinH < 3 || shiftMaxH > 8);
-  const fixedBad =
-    d.fixed && safeMinutes(d.fixedEnd, FIXED_END_DEFAULT) <= safeMinutes(d.fixedStart, FIXED_START_DEFAULT);
 
   return (
     <div
@@ -826,124 +702,6 @@ function EmployeeSheet({
                           </button>
                         ))}
                       </div>
-                    </div>
-                  </SheetSection>
-
-                  <SheetSection title="Luật riêng (mềm – xếp theo khi được)">
-                    <div>
-                      <FieldLabel hint="3–8 h · bỏ trống = mặc định">Độ dài ca</FieldLabel>
-                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                        <HoursInput placeholder="từ" value={d.shiftMin} onChange={(v) => set("shiftMin", v)} />
-                        <span className="text-slate-400">–</span>
-                        <HoursInput placeholder="đến" value={d.shiftMax} onChange={(v) => set("shiftMax", v)} />
-                      </div>
-                      {shiftRangeOff && (
-                        <p className="mt-1 text-xs text-amber-700">
-                          Nhập cả hai ô, trong khoảng 3–8 h (luật tiệm). Giờ kết thúc không được nhỏ hơn giờ bắt đầu.
-                        </p>
-                      )}
-                    </div>
-                    <CheckRow
-                      label="Rải đều trong tháng"
-                      note="Giờ đã chia đều theo tuần sẵn; có Độ dài ca thì ưu tiên nhiều ca ngắn hơn."
-                      checked={d.spreadEvenly}
-                      onChange={(v) => set("spreadEvenly", v)}
-                    />
-                    <div className="space-y-2">
-                      <FieldLabel hint="app ưu tiên xếp ngày và giờ vào đây">Khung giờ ưu tiên</FieldLabel>
-                      {d.windows.map((w, i) => {
-                        const update = (patch: (w: Draft["windows"][number]) => Partial<Draft["windows"][number]>) =>
-                          setD((prev) => ({ ...prev, windows: prev.windows.map((x, k) => (k === i ? { ...x, ...patch(x) } : x)) }));
-                        return (
-                          <div key={i} className="space-y-2 rounded-lg border border-slate-200 p-2">
-                            <DayButtons
-                              selected={w.days}
-                              onToggle={(day) => update((x) => ({ days: toggle(x.days, day) }))}
-                              activeClass="border-teal-700 bg-teal-700 text-white"
-                            />
-                            <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
-                              <input
-                                type="time"
-                                step={1800}
-                                className={`${inputClass} w-full`}
-                                value={w.start}
-                                onChange={(e) => { const start = e.target.value; update(() => ({ start })); }}
-                              />
-                              <span className="text-slate-400">–</span>
-                              <input
-                                type="time"
-                                step={1800}
-                                className={`${inputClass} w-full`}
-                                value={w.end}
-                                onChange={(e) => { const end = e.target.value; update(() => ({ end })); }}
-                              />
-                              <button
-                                type="button"
-                                aria-label="Xoá khung giờ"
-                                onClick={() => set("windows", d.windows.filter((_, k) => k !== i))}
-                                className="rounded-lg px-3 py-2.5 text-sm text-rose-600 hover:bg-rose-50"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                            {(w.days.length === 0 || w.end <= w.start) && (
-                              <p className="text-xs text-amber-700">
-                                {w.days.length === 0 ? "Chọn ít nhất một ngày." : "Giờ kết thúc phải sau giờ bắt đầu."}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-                      <button
-                        type="button"
-                        onClick={() => set("windows", [...d.windows, { days: WEEKDAY_ORDER.slice(1), start: "17:30", end: "19:30" }])}
-                        className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-left text-sm text-slate-600"
-                      >
-                        + Thêm khung giờ <span className="text-slate-400">(ví dụ T3–CN 17:00–22:00)</span>
-                      </button>
-                    </div>
-                  </SheetSection>
-
-                  <SheetSection title="Luật cứng">
-                    <CheckRow
-                      label="Trực ngày lễ"
-                      note="Ngày lễ nào tiệm mở thì người này luôn có ca."
-                      checked={d.holidayDuty}
-                      onChange={(v) => set("holidayDuty", v)}
-                    />
-                    <div className="rounded-lg border border-slate-200">
-                      <label className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5">
-                        <span className="text-sm text-slate-700">
-                          Ca cố định
-                          <span className="block text-xs text-slate-400">Ngày nào đi làm cũng đúng khung giờ này.</span>
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={d.fixed}
-                          onChange={(e) => set("fixed", e.target.checked)}
-                          className="h-6 w-6 shrink-0 rounded border-slate-300"
-                        />
-                      </label>
-                      {d.fixed && (
-                        <div className="border-t border-slate-100 px-3 py-2.5">
-                          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                            <input
-                              type="time"
-                              className={`${inputClass} w-full`}
-                              value={d.fixedStart}
-                              onChange={(e) => set("fixedStart", e.target.value)}
-                            />
-                            <span className="text-slate-400">–</span>
-                            <input
-                              type="time"
-                              className={`${inputClass} w-full`}
-                              value={d.fixedEnd}
-                              onChange={(e) => set("fixedEnd", e.target.value)}
-                            />
-                          </div>
-                          {fixedBad && <p className="mt-1 text-xs text-rose-600">Giờ kết thúc phải sau giờ bắt đầu.</p>}
-                        </div>
-                      )}
                     </div>
                   </SheetSection>
 

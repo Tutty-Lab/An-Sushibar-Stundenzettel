@@ -18,37 +18,24 @@ export type RuleId =
   | "max-days"
   | "days-off"
   | "employment-period"
-  | "two-stores"
   | "contract-max"
-  | "fixed-shift"
-  | "holiday-duty"
   // weich
   | "contract-hours"
-  | "peak-staff"
-  | "day-weights"
-  | "own-shift-length"
-  | "spread-evenly"
-  | "preferred-windows";
+  | "peak-staff";
 
 export type Rule = { id: RuleId; kind: RuleKind; title: string; detail: string };
 
 // An Sushibar: nhà hàng một địa điểm, chủ chỉ tính khi có ca nhập tay.
 export const RULES: readonly Rule[] = [
   { id: "open-hours", kind: "hard", title: "Chỉ trong giờ mở cửa", detail: "T2–CN 10:30–21:00 liên tục. Ngày lễ vẫn mở 10:30–21:00." },
-  { id: "closing", kind: "hard", title: "Phủ kín giờ mở cửa", detail: "Ưu tiên phủ riêng bếp và bồi 10:30–21:00. Người linh hoạt chỉ đảm nhiệm một vị trí tại một thời điểm. Chủ hỗ trợ suốt giờ mở cửa, mỗi lúc một vị trí; không tính giờ hợp đồng." },
+  { id: "closing", kind: "hard", title: "Phủ bếp và bồi", detail: "Ưu tiên luôn có 1 bếp + 1 bồi 10:30–14:00 và 16:00–21:00; 14:00–16:00 được phép trống. Người linh hoạt chỉ đảm nhiệm một vị trí tại một thời điểm. Chủ không được cộng vào độ phủ, không tính giờ." },
   { id: "shift-length", kind: "hard", title: "Ca 3–8 giờ, nghỉ đúng luật", detail: "Mỗi ca ít nhất 3 giờ, tối đa 8 giờ công một ngày; giờ nghỉ theo luật lao động." },
   { id: "max-days", kind: "hard", title: "Tối đa 6 ngày liên tiếp", detail: "Nhân viên làm tối đa 6 ngày mỗi tuần (hoặc „Số ngày làm / tuần\" đã đặt), không quá 6 ngày liên tiếp." },
   { id: "days-off", kind: "hard", title: "Ngày nghỉ cố định", detail: "Không xếp ca vào ngày nghỉ cố định của người đó." },
   { id: "employment-period", kind: "hard", title: "Ngày vào làm / nghỉ việc", detail: "Không xếp ca trước ngày vào làm hoặc sau ngày nghỉ việc." },
   { id: "contract-max", kind: "hard", title: "Không quá giờ hợp đồng", detail: "Không xếp quá giờ tháng (hoặc giờ tuần với hợp đồng theo tuần)." },
-  { id: "fixed-shift", kind: "hard", title: "Ca cố định", detail: "Người có ca cố định chỉ làm đúng khung giờ đó." },
-  { id: "holiday-duty", kind: "hard", title: "Trực ngày lễ", detail: "Ngày lễ tiệm mở thì người trực ngày lễ phải có ca." },
   { id: "contract-hours", kind: "soft", title: "Đủ giờ định mức", detail: "Xếp đủ giờ hợp đồng; tháng không đủ ngày (nghỉ, giới hạn ngày) thì báo thiếu." },
-  { id: "peak-staff", kind: "soft", title: "Số người giờ cao điểm", detail: "Cao điểm cả tuần 17:30–19:30: ưu tiên tăng người." },
-  { id: "day-weights", kind: "soft", title: "Ngày đông nhiều giờ hơn", detail: "Thứ Sáu và Thứ Bảy (hệ số 1,5) nhận nhiều giờ hơn ngày thường." },
-  { id: "own-shift-length", kind: "soft", title: "Độ dài ca riêng", detail: "Mỗi ngày làm nằm trong khoảng giờ đã đặt cho người đó." },
-  { id: "spread-evenly", kind: "soft", title: "Rải đều trong tháng", detail: "Cân giờ các ngày cùng loại trong tháng sau khi ưu tiên phủ bếp/bồi và cao điểm." },
-  { id: "preferred-windows", kind: "soft", title: "Khung giờ ưu tiên", detail: "Xếp vào ngày và giờ người đó muốn, nếu số người và giờ định mức cho phép." },
+  { id: "peak-staff", kind: "soft", title: "Số người giờ cao điểm", detail: "Cao điểm cả tuần 17:00–19:30: ưu tiên 3 người, thứ Sáu và thứ Bảy trước." },
 ];
 
 export const ruleById = (id: RuleId): Rule =>

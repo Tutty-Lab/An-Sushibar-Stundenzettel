@@ -28,16 +28,20 @@ describe("Employee input persistence", () => {
   });
   it("roundtrips employee rules and decimal hours", () => {
     const fields = { ...employee, targetMinutes: 1218, workRole: "BOTH" as const, maxDaysPerWeek: 4,
-      availableWeekdays: ["monday", "friday"] as const, fixedShift: {startMinutes:630,endMinutes:900},
-      shiftHours: {min:3,max:8}, spreadEvenly:true, startDate:"2026-01-01",endDate:"2026-12-31",
-      vacations:[{start:"2026-11-01",end:"2026-11-03",unpaid:true}],
-      preferredWindows:[{days:["friday" as const],startMinutes:1050,endMinutes:1170}] };
+      availableWeekdays: ["monday", "friday"] as const, startDate:"2026-01-01",endDate:"2026-12-31",
+      vacations:[{start:"2026-11-01",end:"2026-11-03",unpaid:true}] };
     const draft = draftFrom({ ...fields, availableWeekdays: [...fields.availableWeekdays] });
     const { id, payrollRecords, ...expected } = fields;
     expect(draftToEmployee(draft)).toMatchObject(expected);
   });
+  it("clears rules inherited from other stores on save", () => {
+    const legacy = { ...employee, fixedShift: {startMinutes:630,endMinutes:900}, requiredOnHolidays: true,
+      shiftHours: {min:3,max:8}, spreadEvenly: true, preferredWindows:[{days:["friday" as const],startMinutes:1050,endMinutes:1170}] };
+    const saved = draftToEmployee(draftFrom(legacy));
+    for (const key of ["fixedShift","requiredOnHolidays","shiftHours","spreadEvenly","preferredWindows"] as const) expect(saved[key]).toBeUndefined();
+  });
   it("rejects incomplete inputs rather than dropping them", () => {
-    for (const patch of [{hours:""},{hours:"abc"},{shiftMin:"3",shiftMax:""},{fixed:true,fixedStart:"",fixedEnd:"20:00"},{windows:[{days:[],start:"10:00",end:"20:00"}]}]) {
+    for (const patch of [{hours:""},{hours:"abc"},{maxDays:"9"}]) {
       const draft = {...draftFrom(employee),...patch};
       expect(draftErrors(draft).length).toBeGreaterThan(0);
       expect(()=>draftToEmployee(draft)).toThrow();

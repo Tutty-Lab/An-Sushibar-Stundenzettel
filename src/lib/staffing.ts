@@ -47,12 +47,22 @@ export const clip = (from: number, to: number) => (blocks: DayBlocks): DayWindow
 export const wholeDay = (blocks: DayBlocks): DayWindow[] =>
   blocks.map((block) => ({ startMinutes: block.startMinutes, endMinutes: block.endMinutes }));
 
+/** Giờ mở cửa trừ khung 14:00–16:00 được phép trống. */
+export const requiredCoverage = (blocks: DayBlocks): DayWindow[] => {
+  const { enabled, startMinutes, endMinutes } = RESTAURANT_POLICY.optionalCoverage;
+  if (!enabled) return wholeDay(blocks);
+  return blocks.flatMap((block) => [
+    { startMinutes: block.startMinutes, endMinutes: Math.min(block.endMinutes, startMinutes) },
+    { startMinutes: Math.max(block.startMinutes, endMinutes), endMinutes: block.endMinutes },
+  ]).filter((window) => window.endMinutes > window.startMinutes);
+};
+
 /** Ngày đông khách: thứ Sáu và thứ Bảy. */
 export const BUSY_DAYS: readonly WeekdayKey[] = ["friday", "saturday"];
 
 /** Mức phủ vận hành: bếp + bồi; thêm người mỗi ngày trong cao điểm tối. */
 export const ANSUSHIBAR_STAFFING_RULES: readonly StaffingRule[] = [
- { label: "Khung cần đủ bếp và bồi", when: "10:30–21:00", minStaff: 2, maxStaff: Infinity, scaled: false, windows: wholeDay },
+ { label: "Khung cần đủ bếp và bồi", when: "10:30–14:00, 16:00–21:00", minStaff: 2, maxStaff: Infinity, scaled: false, windows: requiredCoverage },
  { label: "Cao điểm tối cả tuần", when: "17:00–19:30", minStaff: 3, maxStaff: 6, scaled: false, weekdays: RESTAURANT_POLICY.peak.weekdays, windows: clip(PEAK_START, PEAK_END) },
 ];
 
@@ -108,58 +118,6 @@ export function minimumStaffHours(
     }
   }
   return minutes / 60;
-}
-
-// ── Đường nhu cầu trong ngày ────────────────────────────────────────────────
-/** Nhu cầu riêng An Sushibar; cao điểm tối mỗi ngày. */
-export type DemandBand = { startMinutes: number; endMinutes: number; level: number; label: string };
-
-const band = (from: string, to: string, level: number, label: string): DemandBand => {
-  const toMinutes = (value: string) => Number(value.slice(0, 2)) * 60 + Number(value.slice(3));
-  return { startMinutes: toMinutes(from), endMinutes: toMinutes(to), level, label };
-};
-
-const restaurantDemand = [band("10:30", "14:00", 1, "Buổi trưa"), band("14:00", "16:00", 1, "Buổi chiều"), band("16:00", "17:00", 1, "Trước cao điểm"), band("17:00", "19:30", 2.5, "Cao điểm tối"), band("19:30", "21:00", 1, "Cuối ngày")];
-export const DEMAND_PROFILE = { normal: restaurantDemand, saturday: restaurantDemand };
-
-export function demandProfileOf(
-  weekday: WeekdayKey,
-  _weights: Record<WeekdayKey, number> = DAY_WEIGHTS,
-): readonly DemandBand[] {
-  // Evening peak applies every open day.
-  return BUSY_DAYS.includes(weekday) ? DEMAND_PROFILE.saturday : DEMAND_PROFILE.normal;
-}
-
-/** Relative workload at a minute (1 outside all bands). */
-export function workloadAt(
-  minute: number,
-  weekday: WeekdayKey,
-  weights: Record<WeekdayKey, number> = DAY_WEIGHTS,
-): number {
-  return demandProfileOf(weekday, weights).find((b) => minute >= b.startMinutes && minute < b.endMinutes)?.level ?? 1;
-}
-
-/**
- * Số người mục tiêu cho từng 30 phút mở cửa:
- *   mục tiêu = giờ công của ngày × mức nhu cầu ÷ tổng mức cả ngày (tính theo phút).
- * Trả về [phút bắt đầu, số người mục tiêu].
- */
-export function slotTargets(
-  blocks: DayBlocks,
-  weekday: WeekdayKey,
-  targetHours: number,
-  slot = 30,
-  weights: Record<WeekdayKey, number> = DAY_WEIGHTS,
-): [number, number][] {
-  const slots: [number, number][] = [];
-  for (const block of blocks) {
-    for (let minute = block.startMinutes; minute < block.endMinutes; minute += slot) {
-      slots.push([minute, workloadAt(minute, weekday, weights)]);
-    }
-  }
-  const levelMinutes = slots.reduce((sum, [, level]) => sum + level * slot, 0);
-  const scale = levelMinutes > 0 ? (targetHours * 60) / levelMinutes : 0;
-  return slots.map(([minute, level]) => [minute, level * scale]);
 }
 
 export function validPause(shift: Shift): boolean {

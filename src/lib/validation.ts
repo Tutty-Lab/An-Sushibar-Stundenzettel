@@ -10,11 +10,8 @@ import { maxConsecutiveRun } from "./consecutive";
 import { weekStartOf } from "./weeks";
 import { validPause } from "./staffing";
 import { mayWorkOn } from "./availability";
-import { publicHolidayNames } from "./holidays";
 import type { WorkHoursConfig } from "./workHours";
 import type { RuleId } from "./rules";
-import { minutesOutsidePreferred, ownShiftRangeMinutes, preferredWindowsOf } from "./preferredWindows";
-import { parseIsoDate, weekdayKeyOf } from "./demand";
 
 export type ValidationError = {
   employeeId?: string;
@@ -229,36 +226,6 @@ export function validateSchedule(
       }
     }
 
-    // Weiche Regeln je Person: nur melden, der Plan bleibt gültig.
-    const ownRange = ownShiftRangeMinutes(emp);
-    if (ownRange) {
-      const outside = [...seenDates].filter((date) => {
-        const paid = empShifts.filter((shift) => shift.date === date).reduce((sum, shift) => sum + shift.paidMinutes, 0);
-        return paid < ownRange.min || paid > ownRange.max;
-      });
-      if (outside.length > 0) {
-        errors.push({
-          employeeId: emp.id,
-          severity: "warning",
-          rule: "own-shift-length",
-          message: `${emp.name}: ${outside.length} ngày ngoài độ dài ca ${minutesToShortHours(ownRange.min)}–${minutesToShortHours(ownRange.max)} (${outside.map((d) => d.slice(8, 10) + "." + d.slice(5, 7)).join(", ")}).`,
-        });
-      }
-    }
-    const windows = preferredWindowsOf(emp);
-    if (windows.length > 0) {
-      const outsideShifts = empShifts.filter(
-        (shift) => minutesOutsidePreferred(windows, weekdayKeyOf(parseIsoDate(shift.date)), shift) > 0,
-      );
-      if (outsideShifts.length > 0) {
-        errors.push({
-          employeeId: emp.id,
-          severity: "warning",
-          rule: "preferred-windows",
-          message: `${emp.name}: ${outsideShifts.length}/${empShifts.length} ca ngoài khung giờ ưu tiên (${[...new Set(outsideShifts.map((s) => s.date.slice(8, 10) + "." + s.date.slice(5, 7)))].join(", ")}).`,
-        });
-      }
-    }
 
     const targetDifference = assignedMinutes - soll;
     // Randwochen werden so gerundet, dass eine über zwei Monate laufende Woche
@@ -296,26 +263,6 @@ export function validateSchedule(
     });
   }
 
-  // Feiertagspflicht: wer requiredOnHolidays trägt, muss an jedem GEÖFFNETEN
-  // Feiertag im Dienst sein (Vorgabe des Betriebs). Ohne Datumsliste lässt
-  // sich nicht sagen, ob der Laden offen hat – dann wird nicht geprüft.
-  const openDateSet = Array.isArray(openDays) ? new Set(openDays) : null;
-  if (openDateSet) {
-    for (const [date, name] of publicHolidayNames(_year)) {
-      if (!openDateSet.has(date)) continue;
-      for (const emp of employees) {
-        if (!emp.requiredOnHolidays || !mayWorkOn(emp, date)) continue;
-        if (shifts.some((shift) => shift.employeeId === emp.id && shift.date === date)) continue;
-        errors.push({
-          employeeId: emp.id,
-          date,
-          severity: "warning",
-          rule: "holiday-duty",
-          message: `${emp.name}: ngày lễ ${date} (${name}) chưa có ca — tiệm yêu cầu phải có mặt.`,
-        });
-      }
-    }
-  }
 
   // Warnungen machen den Plan nicht ungültig – sonst blockiert eine zu große
   // Zahl in der Mitarbeiterliste das Drucken eines sonst brauchbaren Plans.

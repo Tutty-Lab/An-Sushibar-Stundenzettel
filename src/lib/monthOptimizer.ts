@@ -10,7 +10,6 @@
 
 import { RESTAURANT_POLICY, isOptionalCoverageTime, compareStaffingPriority } from "./restaurantPolicy";
 import type { Employee, Shift } from "../types";
-import type { WeekdayKey } from "./demand";
 import { datesOfMonth, parseIsoDate, weekdayKeyOf } from "./demand";
 import { calculatePause } from "./time";
 import { mayWorkOn } from "./availability";
@@ -20,7 +19,7 @@ import { publicHolidays } from "./holidays";
 import { weekStartOf } from "./weeks";
 import { employeeForMonth } from "./history";
 import { monthlyTargetMinutesFor, weeklyBudgetMinutes } from "./contract";
-import { STAFFING_RULES, staffingWindows, type StaffingRule } from "./staffing";
+import { BUSY_DAYS, STAFFING_RULES, staffingWindows, type StaffingRule } from "./staffing";
 
 export type OptimizerInput = {
   year: number;
@@ -30,7 +29,6 @@ export type OptimizerInput = {
   employees: Employee[];
   holidays?: Set<string>;
   rules?: readonly StaffingRule[];
-  weights?: Record<WeekdayKey, number>;
   blockedDays?: Record<string, readonly string[]>;
   adjacentShifts?: readonly Shift[];
   /** Số vòng tối ưu; mặc định đủ cho một tháng. */
@@ -61,16 +59,6 @@ type Emp = {
   caps?: Map<string, number>; outside: Set<string>;
 };
 
-/** Dùng được khi mỗi ngày mở một khối liên tục và không có ca cố định / khung ưu tiên. */
-export function canOptimizeMonth(input: OptimizerInput): boolean {
-  const holidays = input.holidays ?? publicHolidays(input.year);
-  if (input.employees.some((e) => !e.isOwner && (e.fixedShift || e.preferredWindows?.length || e.shiftHours))) return false;
-  return datesOfMonth(input.year, input.month).every((date) => {
-    const day = resolveDay(input.workHours, date, holidays, input.overrides ?? {});
-    return day.closed || (day.blocks.length === 1 && day.blocks[0].endMinutes - day.blocks[0].startMinutes >= MIN_PAID);
-  });
-}
-
 function kindOf(employee: Employee): Kind {
   return employee.workRole === "KITCHEN" ? "K" : employee.workRole === "SERVICE_SUSHI" ? "S" : employee.workRole === "BOTH" ? "B" : "G";
 }
@@ -92,7 +80,7 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
   const rules = input.rules ?? STAFFING_RULES;
   const allDates = datesOfMonth(input.year, input.month);
   const resolved = allDates.map((date) => ({ date, day: resolveDay(input.workHours, date, holidays, input.overrides ?? {}) }));
-  const openDates = resolved.filter((r) => !r.day.closed).map((r) => r.date);
+  const openDates = resolved.filter((r) => !r.day.closed && r.day.window.endMinutes - r.day.window.startMinutes >= MIN_PAID).map((r) => r.date);
   const employees = input.employees.filter((e) => !e.isOwner).map((e) => employeeForMonth(e, month));
   if (!openDates.length || !employees.length) return [];
 
@@ -118,14 +106,15 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
 
   const weekdayOf = (date: string) => effectiveWeekdayKey(date, holidays);
   const days: DayInfo[] = openDates.map((date) => {
-    const block = resolved.find((r) => r.date === date)!.day.blocks[0];
+    // Tiệm mở liên tục; nếu có ngày nhập nhiều khối thì xếp trong khung đầu–cuối.
+    const block = resolved.find((r) => r.date === date)!.day.window;
     const slots = (block.endMinutes - block.startMinutes) / SLOT;
     const windows = staffingWindows([block], weekdayOf(date), rules);
     const need = Array.from({ length: Math.ceil(slots) }, (_, i) => {
       const minute = block.startMinutes + i * SLOT;
       return windows.reduce((m, w) => (w.startMinutes <= minute && w.endMinutes > minute ? Math.max(m, w.minStaff) : m), 0);
     });
-    return { date, open: block.startMinutes, close: block.endMinutes, week: weekStartOf(date), busy: ["friday","saturday"].includes(weekdayKeyOf(parseIsoDate(date))), need };
+    return { date, open: block.startMinutes, close: block.endMinutes, week: weekStartOf(date), busy: BUSY_DAYS.includes(weekdayKeyOf(parseIsoDate(date))), need };
   });
   const D = days.length;
   const E = emps.length;

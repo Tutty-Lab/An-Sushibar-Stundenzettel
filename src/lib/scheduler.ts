@@ -5,15 +5,14 @@ import type { Employee, Shift } from "../types";
 import type { OverrideMap, WorkHoursConfig } from "./workHours";
 import type { StaffingRule } from "./staffing";
 import type { WeekdayKey } from "./demand";
-import { isoAddDays, consecutiveRunLengthWith } from "./consecutive";
+import { isoAddDays } from "./consecutive";
 import { datesOfMonth, parseIsoDate } from "./demand";
 import { weekStartOf } from "./weeks";
 import { publicHolidays } from "./holidays";
 import { resolveDay } from "./workHours";
 import { mayWorkOn } from "./availability";
 import { employeeForMonth } from "./history";
-import { generateWeeklySchedule, completeContractHours } from "./restaurantScheduler";
-import { canOptimizeMonth, optimizeMonth } from "./monthOptimizer";
+import { optimizeMonth } from "./monthOptimizer";
 
 export type GenerateInput = {
   adjacentShifts?: readonly Shift[];
@@ -38,14 +37,6 @@ export type GenerateInput = {
   storeTag?: string;
 };
 
-function enforceRest(shifts: Shift[]): Shift[] {
- const worked = new Map<string, Set<string>>();
- return [...shifts].sort((a,b) => a.date.localeCompare(b.date)).filter(shift => {
- const days = worked.get(shift.employeeId) ?? new Set<string>();
- if (consecutiveRunLengthWith(days, shift.date) > 6) return false;
- days.add(shift.date); worked.set(shift.employeeId, days); return true;
- });
-}
 export function boundaryRestDays(input: GenerateInput): Record<string, readonly string[]> {
   const dates = datesOfMonth(input.year, input.month);
   const blocked = { ...input.blockedDays };
@@ -62,15 +53,15 @@ export function boundaryRestDays(input: GenerateInput): Record<string, readonly 
   }
   return blocked;
 }
-/** Tối ưu cả tháng; bộ xếp theo tuần cũ chỉ còn cho ca cố định / ngày nhiều khối. */
+/** Một thuật toán duy nhất: tối ưu cả tháng theo quy tắc An Sushibar. */
 function solve(input: GenerateInput): Shift[] {
-  if (canOptimizeMonth(input)) return assignShiftRoles(optimizeMonth(input), input.employees);
-  return assignShiftRoles(completeContractHours(input, enforceRest(generateWeeklySchedule(input))), input.employees);
+  return assignShiftRoles(optimizeMonth(input), input.employees);
 }
 export function generateSchedule(input: GenerateInput): Shift[] {
   input = { ...input, blockedDays: boundaryRestDays(input) };
-  const pair = input.employees.filter(e => ["ansushibar-5", "ansushibar-6"].includes(e.id)).sort((a,b) => a.id.localeCompare(b.id));
-  if (pair.length !== 2) return solve(input);
+  // Minijob chia nhau các cuối tuần xen kẽ (theo thứ tự mã nhân viên), không ghi cứng mã.
+  const pair = input.employees.filter(e => !e.isOwner && e.employmentType === "MINIJOB").sort((a,b) => a.id.localeCompare(b.id));
+  if (pair.length < 2) return solve(input);
   const blockedDays = { ...input.blockedDays };
   for (const [index, employee] of pair.entries()) {
     const blocked = new Set(blockedDays[employee.id] ?? []);
@@ -78,7 +69,7 @@ export function generateSchedule(input: GenerateInput): Shift[] {
       // Global Monday index keeps the same weekend assignment across months.
       const monday = parseIsoDate(weekStartOf(date));
       const week = Math.round((Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate()) - Date.UTC(2026, 0, 5)) / (7 * 86400000));
-      if (((week % 2) + 2) % 2 !== index) blocked.add(date);
+      if (((week % pair.length) + pair.length) % pair.length !== index) blocked.add(date);
     }
     // Holiday closures can leave too few eligible weekend days for the current contract.
     // Borrow another weekend day only when the alternating weekends cannot hold the hours.

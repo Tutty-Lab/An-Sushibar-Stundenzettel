@@ -33,7 +33,8 @@ describe('holiday-open staffing optimization',()=>{
  }
  console.log(JSON.stringify({month,peakBase,busyPeak,normalPeak,optionalGap,kitchenMorning,kitchenAfternoonOverlap,longShifts:shifts.filter(s=>s.paidMinutes>360).length,mediumShifts:shifts.filter(s=>s.paidMinutes>=240 && s.paidMinutes<=360).length,role,closing,short,peak,seconds:(performance.now()-started)/1000}));
  if(month===10){
- expect(busyPeak).toBeLessThanOrEqual(300);expect(peakBase).toBe(0);expect(optionalGap).toBeLessThanOrEqual(1410);
+ expect(busyPeak).toBeLessThanOrEqual(300);expect(peakBase).toBe(0);// 14:00–16:00 không còn mục tiêu 2 người: trống chiều được đổi lấy cao điểm.
+ expect(optionalGap).toBeLessThanOrEqual(1560);
  const morningCook=shifts.filter(s=>s.date==='2026-10-02' && employees.find(e=>e.id===s.employeeId)?.workRole==='KITCHEN');
  expect(coverageSummary(morningCook,630,660,1).gaps).toEqual([]);
 // Base coverage across every opening slot precedes the optional peak worker.

@@ -14,22 +14,17 @@ export type WeekdayKey =
   | "sunday";
 
 /**
- * Nachfrage-Gewichte je Wochentag (keine Mitarbeiterzahlen!).
- *
- * Angabe des Betriebs für beide Studios: Montag 1,2 · Dienstag 1,0 ·
- * Mittwoch 1,2 · Donnerstag 1,2 · FREITAG 2,0 · SAMSTAG 2,0. Freitag und
- * Samstag sind mit Abstand die stärksten Tage, Dienstag ist der ruhigste.
- * Sonntag ist geschlossen; an gesetzlichen Feiertagen bleibt ebenfalls zu.
+ * Hệ số ngày của An Sushibar (chỉ dùng cho báo cáo và hợp đồng theo tuần):
+ * thứ Sáu, thứ Bảy đông nhất; các ngày khác như nhau. Tiệm mở cả tuần và ngày lễ.
  */
 export const DAY_WEIGHTS: Record<WeekdayKey, number> = {
-  // Đông khách: thứ Hai, thứ Năm, thứ Sáu.
   monday: 1.0,
   tuesday: 1.0,
   wednesday: 1.0,
   thursday: 1.0,
   friday: 1.5,
   saturday: 1.5,
-  sunday: 1.0, // geschlossen (Gewicht nur relevant, falls doch geöffnet)
+  sunday: 1.0,
 };
 
 /** date-fns getDay(): 0=So ... 6=Sa  ->  WeekdayKey. */

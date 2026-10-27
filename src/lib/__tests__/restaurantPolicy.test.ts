@@ -1,10 +1,10 @@
 import { resolveDay } from "../workHours";
 import { publicHolidays } from "../holidays";
-import { staffingWindows, workloadAt } from "../staffing";
+import { staffingWindows } from "../staffing";
 import { boundaryRestDays } from "../scheduler";
 import type { Shift } from "../../types";
 import { describe, it, expect } from "vitest";
-import { compareStaffingPriority, isOptionalCoverageTime, missingRestaurantRoles, RESTAURANT_POLICY } from "../restaurantPolicy";
+import { compareStaffingPriority, isOptionalCoverageTime, RESTAURANT_POLICY } from "../restaurantPolicy";
 import { applyReportedHistory } from "../history";
 import { createSampleSchedule } from "../sampleData";
 describe("An Sushibar policy",()=>{
@@ -40,13 +40,6 @@ describe("An Sushibar policy",()=>{
   expect(blocked[employee.id]).toContain("2026-10-26");
   expect(blocked[employee.id]).toContain("2026-10-15");
  });
- it("requires distinct kitchen/service coverage",()=>{
-  expect(missingRestaurantRoles(2,0,0)).toBe(1);
-  expect(missingRestaurantRoles(0,2,0)).toBe(1);
-  expect(missingRestaurantRoles(0,0,1)).toBe(1);
-  expect(missingRestaurantRoles(1,0,1)).toBe(0);
-  expect(missingRestaurantRoles(1,1,0)).toBe(0);
- });
  it("keeps afternoon coverage as a fallback after other opening slots",()=>{
   expect(isOptionalCoverageTime(839)).toBe(false);
   expect(isOptionalCoverageTime(840)).toBe(true);
@@ -54,7 +47,8 @@ describe("An Sushibar policy",()=>{
   expect(isOptionalCoverageTime(960)).toBe(false);
   for(const weekday of RESTAURANT_POLICY.peak.weekdays){
    const windows=staffingWindows([{startMinutes:630,endMinutes:1260}],weekday);
-   expect(windows.some(w=>w.startMinutes===630 && w.endMinutes===1260 && w.minStaff===2)).toBe(true);
+   // 14:00–16:00 được phép trống: rule 2 người chỉ phủ hai khung còn lại.
+   expect(windows.filter(w=>w.minStaff===2).map(w=>[w.startMinutes,w.endMinutes])).toEqual([[630,840],[960,1260]]);
   }
  });
  it("protects other opening slots, then afternoon coverage, before soft peaks",()=>{
@@ -67,7 +61,6 @@ describe("An Sushibar policy",()=>{
  it("has the evening peak every day",()=>{
   for (const weekday of RESTAURANT_POLICY.peak.weekdays) {
     expect(staffingWindows([{startMinutes:630,endMinutes:1260}],weekday).some(w=>w.startMinutes===1020 && w.endMinutes===1170 && w.minStaff===3)).toBe(true);
-    expect(workloadAt(1080,weekday)).toBeGreaterThan(workloadAt(900,weekday));
   }
   expect(RESTAURANT_POLICY.peak).toEqual({startMinutes:1020,endMinutes:1170,weekdays:["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]});
  });
