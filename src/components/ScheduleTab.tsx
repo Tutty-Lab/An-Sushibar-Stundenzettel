@@ -146,11 +146,11 @@ export function ScheduleTab({
     const ovMap = Object.fromEntries(schedule.dateOverrides.map((o) => [o.date, o]));
     const nameOf = new Map(schedule.employees.map((e) => [e.id, e.name.trim().split(/\s+/).pop() ?? e.name]));
     const ownerIds = new Set(schedule.employees.filter(e => e.isOwner).map(e => e.id));
-    const result = new Map<string, { open: string; close: string; windows: Map<string, ReturnType<typeof coverageSummary>> }>();
+    const result = new Map<string, { open: string; close: string; windows: Map<string, ReturnType<typeof coverageSummary> & { owner: boolean }> }>();
     for (const d of dates) {
       const day = resolveDay(schedule.workHours, d, holidays, ovMap);
       const dayShifts = schedule.shifts.filter((s) => s.date === d && !ownerIds.has(s.employeeId));
-      const windows = new Map<string, ReturnType<typeof coverageSummary>>();
+      const windows = new Map<string, ReturnType<typeof coverageSummary> & { owner: boolean }>();
       if (day.closed) {
         result.set(d, { open: "–", close: "–", windows });
         continue;
@@ -165,7 +165,12 @@ export function ScheduleTab({
           return !("group" in w) || role === w.group;
         });
         const required = "group" in w ? (isOptionalCoverageTime(w.from) ? 0 : 1) : w.key === "peak" ? 3 : 2;
-        windows.set(w.key, coverageSummary(eligible, Math.max(w.from, from), Math.min(w.to, to), required));
+        const summary=coverageSummary(eligible, Math.max(w.from, from), Math.min(w.to, to), required);
+        const ownerEligible=schedule.shifts.filter(s=>s.date===d && ownerIds.has(s.employeeId)).filter(s=>{
+          const role=effectiveShiftRole(s,schedule.employees.find(e=>e.id===s.employeeId));
+          return !("group" in w) || role===w.group;
+        });
+        windows.set(w.key, {...summary,owner:ownerEligible.some(s=>s.startMinutes<Math.min(w.to,to) && s.endMinutes>Math.max(w.from,from))});
       }
       result.set(d, { open: openers.join(", ") || "✗", close: closers.join(", ") || "✗", windows });
     }
@@ -242,7 +247,7 @@ export function ScheduleTab({
 
       {mode === "schedule" && schedule.shifts.length > 0 && <StaffingReport analysis={store.analysis} />}
 
-      {mode === "schedule" && <p className="mb-3 rounded bg-sky-50 px-3 py-2 text-sm text-sky-900">Chủ hỗ trợ suốt giờ mở cửa, mỗi lúc một vị trí Bếp hoặc Bồi; debug chỉ tính nhân viên; ô “Chủ” nghĩa là không có nhân viên trong khung đó. Chủ không được cộng vào số người. Không tính giờ hợp đồng hay chấm công.</p>}
+      {mode === "schedule" && <p className="mb-3 rounded bg-sky-50 px-3 py-2 text-sm text-sky-900">Chủ hỗ trợ suốt giờ mở cửa, mỗi lúc một vị trí Bếp hoặc Bồi; debug hiển thị nhân viên và “+ Chủ”; giờ chủ không tính hợp đồng. Không tính giờ hợp đồng hay chấm công.</p>}
 
       {/* Lỗi kiểm tra */}
       {mode === "schedule" && !validation.valid && schedule.shifts.length > 0 && (
@@ -408,6 +413,7 @@ export function ScheduleTab({
                       dates={gridDates}
                       gaps={(d) => debugStats.get(d)?.windows.get(w.key)?.gaps ?? []}
                       value={(d) => debugStats.get(d)?.windows.get(w.key)?.minimum ?? null}
+                      owner={(d) => debugStats.get(d)?.windows.get(w.key)?.owner ?? false}
                     />
                   ))}
                 </>
@@ -432,15 +438,14 @@ export function ScheduleTab({
 }
 
 /** Các khung kiểm tra của nhà hàng, gồm cao điểm mỗi ngày. */
-const { opening, peak } = RESTAURANT_POLICY;
-const GROUP_RANGES = Array.from(
-  { length: Math.ceil((opening.endMinutes-opening.startMinutes)/30) },
-  (_,i) => {
-    const from=opening.startMinutes+i*30;
-    const to=from===peak.startMinutes ? peak.endMinutes : Math.min(from+30,opening.endMinutes);
-    return [`slot-${from}`, `${minutesToTime(from)}–${minutesToTime(to)}`, from, to] as const;
-  },
-).filter(([, , from]) => from<=peak.startMinutes || from>=peak.endMinutes);
+const { peak } = RESTAURANT_POLICY;
+const GROUP_RANGES = [
+  ["morning", "10:30–14:00", 630, 840],
+  ["afternoon", "14:00–16:00", 840, 960],
+  ["prepeak", "16:00–17:00", 960, 1020],
+  ["peak", "17:00–19:30", 1020, 1170],
+  ["closing", "19:30–21:00", 1170, 1260],
+] as const;
 
 const DEBUG_WINDOWS = [
   { key: "peak", label: `Cao điểm ${minutesToTime(peak.startMinutes)}–${minutesToTime(peak.endMinutes)}`, from: peak.startMinutes, to: peak.endMinutes },
@@ -450,13 +455,14 @@ const DEBUG_WINDOWS = [
 ];
 
 /** Lemon layout: one number per cell; shortage intervals stay in the tooltip. */
-function MinPeopleRow({ label, title, dates, value, gaps, required }: {
+function MinPeopleRow({ label, title, dates, value, gaps, required, owner }: {
   label: string;
   title: string;
   dates: string[];
   value: (d: string) => number | null;
   gaps: (d: string) => CoverageGap[];
   required: number;
+  owner: (d: string) => boolean;
 }) {
   return (
     <tr className="bg-slate-50 text-slate-600">
@@ -466,12 +472,15 @@ function MinPeopleRow({ label, title, dates, value, gaps, required }: {
       </td>
       {dates.map((d) => {
         const n = value(d);
+        const hasOwner = owner(d) && n != null && n < required;
         const missing = gaps(d);
-        const tone = n == null ? "text-slate-300" : missing.length ? "bg-yellow-50 text-yellow-700 font-semibold" : "";
+        const tone = n == null ? "text-slate-300" : missing.length || n === 0 ?"bg-yellow-50 text-yellow-700 font-semibold" : "";
         const detail = missing.map(gap => `${minutesToTime(gap.startMinutes)}–${minutesToTime(gap.endMinutes)}: thiếu ${Math.max(0, required-gap.count)} người`).join("; ");
-        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n === 0 ? "Chủ · chưa có nhân viên; chủ không tính vào độ phủ" : `${n} nhân viên`} · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
+        // Không có nhân viên thì chủ đứng: luôn ghi "Chủ" thay cho số 0.
+        const display = n == null ? "–" : n === 0 ? "Chủ" : `${n}${hasOwner ? " + Chủ" : ""}`;
+        return <td key={d} title={n == null ? "Đóng cửa / ngoài khung giờ" : `${n === 0 ? "Chủ · chưa có nhân viên" :`${n} nhân viên${hasOwner ? " + Chủ" : ""}`} · cần ${required}${detail ? ` · ${detail}` : " · đủ người"}`}
           className={`border-t border-l border-slate-200 px-1 py-1 text-center ${tone}`}>
-          {n === 0 ? "Chủ" : n ?? "–"}
+          {display}
         </td>;
       })}
       <td className="border-t border-l border-slate-200" />
