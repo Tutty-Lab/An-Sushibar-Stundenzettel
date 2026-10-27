@@ -33,12 +33,17 @@ describe('holiday-open staffing optimization',()=>{
  }
  console.log(JSON.stringify({month,peakBase,busyPeak,normalPeak,optionalGap,kitchenMorning,kitchenAfternoonOverlap,longShifts:shifts.filter(s=>s.paidMinutes>360).length,mediumShifts:shifts.filter(s=>s.paidMinutes>=240 && s.paidMinutes<=360).length,role,closing,short,peak,seconds:(performance.now()-started)/1000}));
  if(month===10){
- expect(busyPeak).toBeLessThanOrEqual(300);expect(peakBase).toBe(0);// 14:00–16:00 không còn mục tiêu 2 người: trống chiều được đổi lấy cao điểm.
- expect(optionalGap).toBeLessThanOrEqual(1560);
+ expect(busyPeak).toBeLessThanOrEqual(300);expect(peakBase).toBe(0);
+ // 14:00–16:00 được trống (chủ đứng); giờ dư dồn sang T6/T7 theo hệ số ngày.
+ const paidOn=(date:string)=>shifts.filter(s=>s.date===date).reduce((n,s)=>n+s.paidMinutes,0);
+ const isBusy=(d:string)=>[5,6].includes(new Date(d+"T12:00:00").getDay());
+ const avg=(xs:number[])=>xs.reduce((a,b)=>a+b,0)/xs.length;
+ expect(avg(open.filter(isBusy).map(paidOn))-avg(open.filter(d=>!isBusy(d)).map(paidOn))).toBeGreaterThanOrEqual(180);
  const morningCook=shifts.filter(s=>s.date==='2026-10-02' && employees.find(e=>e.id===s.employeeId)?.workRole==='KITCHEN');
  expect(coverageSummary(morningCook,630,660,1).gaps).toEqual([]);
 // Base coverage across every opening slot precedes the optional peak worker.
-expect(shifts.filter(s=>s.paidMinutes>=240 && s.paidMinutes<=360).length).toBeGreaterThanOrEqual(50);expect(kitchenMorning).toBe(0);expect(role).toBeLessThanOrEqual(240);expect(closing).toBeLessThanOrEqual(240);expect(short).toBeLessThanOrEqual(8);expect(peak).toBeLessThanOrEqual(2850);
+expect(shifts.filter(s=>s.paidMinutes>=240 && s.paidMinutes<=360).length).toBeGreaterThanOrEqual(50);expect(kitchenMorning).toBe(0);// Thiếu một vị trí do chủ đứng bù; đổi lấy giờ T6/T7.
+expect(role).toBeLessThanOrEqual(360);expect(closing).toBeLessThanOrEqual(300);expect(short).toBeLessThanOrEqual(12);expect(peak).toBeLessThanOrEqual(2850);
  expect(optionalGap).toBeGreaterThan(0);
  const splitDays=new Map<string,typeof shifts>();
  for(const shift of shifts){const key=`${shift.employeeId}:${shift.date}`;splitDays.set(key,[...(splitDays.get(key) ?? []),shift]);}

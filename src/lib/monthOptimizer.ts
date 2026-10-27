@@ -10,7 +10,7 @@
 
 import { RESTAURANT_POLICY, isOptionalCoverageTime, compareStaffingPriority } from "./restaurantPolicy";
 import type { Employee, Shift } from "../types";
-import { datesOfMonth, parseIsoDate, weekdayKeyOf } from "./demand";
+import { DAY_WEIGHTS, datesOfMonth, parseIsoDate, weekdayKeyOf, type WeekdayKey } from "./demand";
 import { calculatePause } from "./time";
 import { mayWorkOn } from "./availability";
 import { isoAddDays, seededRandom } from "./consecutive";
@@ -19,7 +19,7 @@ import { publicHolidays } from "./holidays";
 import { weekStartOf } from "./weeks";
 import { employeeForMonth } from "./history";
 import { monthlyTargetMinutesFor, weeklyBudgetMinutes } from "./contract";
-import { BUSY_DAYS, STAFFING_RULES, staffingWindows, type StaffingRule } from "./staffing";
+import { BUSY_DAYS, STAFFING_RULES, staffingWindows, weightedDailyTargets, type StaffingRule } from "./staffing";
 
 export type OptimizerInput = {
   year: number;
@@ -29,6 +29,8 @@ export type OptimizerInput = {
   employees: Employee[];
   holidays?: Set<string>;
   rules?: readonly StaffingRule[];
+  /** Hệ số ngày (T6/T7 đông hơn). */
+  weights?: Record<WeekdayKey, number>;
   blockedDays?: Record<string, readonly string[]>;
   adjacentShifts?: readonly Shift[];
   /** Số vòng tối ưu; mặc định đủ cho một tháng. */
@@ -39,7 +41,9 @@ const SLOT = 30;
 const MIN_PAID = 180;
 const MAX_PAID = 480;
 
-const W_ROLE = 30000; // mọi ô thiếu bộ phận có cùng ưu tiên, kể cả giờ mở cửa
+const W_ROLE = 30000; // mỗi ô thiếu một bộ phận (chủ đứng bù được một vị trí)
+const W_BOTH = 60000; // thêm nữa khi thiếu CẢ bếp lẫn bồi: chủ chỉ đứng được một chỗ
+const W_BALANCE = 400; // (giờ ngày − giờ mục tiêu theo hệ số ngày)²
 const W_GAP_PIECE = 10; // độ phủ đứng trước việc gom khoảng thiếu
 const W_ROLE_OVER = 80; // hạn chế chồng cùng bộ phận ngoài cao điểm
 const W_EMPTY = 1000; // thêm nữa nếu tiệm trống hẳn
@@ -53,7 +57,7 @@ const W_SHORT = 25; // ca < 4 h
 type Role = 0 | 1 | 2; // 0 bếp, 1 bồi, 2 không phân bộ phận
 type Kind = "K" | "S" | "B" | "G";
 type Cell = { start: number; paid: number; pause: number; role: Role; split?: {from:number;to:number} } | null;
-type DayInfo = { date: string; open: number; close: number; week: string; busy: boolean; need: number[] };
+type DayInfo = { date: string; open: number; close: number; week: string; busy: boolean; need: number[]; target: number };
 type Emp = {
   source: Employee; kind: Kind; target: number; allowed: boolean[]; maxPerWeek: number;
   caps?: Map<string, number>; outside: Set<string>;
@@ -105,6 +109,11 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
   const hasRoles = emps.some((e) => e.kind !== "G");
 
   const weekdayOf = (date: string) => effectiveWeekdayKey(date, holidays);
+  // Giờ mục tiêu mỗi ngày: sàn = một nhân viên suốt giờ mở cửa (chủ đứng vị trí còn lại),
+  // phần còn lại chia theo hệ số ngày, nên T6/T7 (1,5) nhận nhiều giờ hơn ngày thường.
+  const openMinutesOf = (date: string) => { const w = resolved.find((r) => r.date === date)!.day.window; return w.endMinutes - w.startMinutes; };
+  const dayTargets = weightedDailyTargets(openDates, emps.reduce((n, e) => n + e.target, 0) / 60, weekdayOf, openMinutesOf,
+    input.weights ?? DAY_WEIGHTS, (date) => openMinutesOf(date) / 60);
   const days: DayInfo[] = openDates.map((date) => {
     // Tiệm mở liên tục; nếu có ngày nhập nhiều khối thì xếp trong khung đầu–cuối.
     const block = resolved.find((r) => r.date === date)!.day.window;
@@ -114,7 +123,7 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
       const minute = block.startMinutes + i * SLOT;
       return windows.reduce((m, w) => (w.startMinutes <= minute && w.endMinutes > minute ? Math.max(m, w.minStaff) : m), 0);
     });
-    return { date, open: block.startMinutes, close: block.endMinutes, week: weekStartOf(date), busy: BUSY_DAYS.includes(weekdayKeyOf(parseIsoDate(date))), need };
+    return { date, open: block.startMinutes, close: block.endMinutes, week: weekStartOf(date), busy: BUSY_DAYS.includes(weekdayKeyOf(parseIsoDate(date))), need, target: dayTargets.get(date)! * 60 };
   });
   const D = days.length;
   const E = emps.length;
@@ -125,19 +134,21 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
   const dayCost = new Float64Array(D);
   const counts = [new Int8Array(32), new Int8Array(32), new Int8Array(32)];
 
-  type Priority = [number,number,number,number];
+  type Priority = [number,number,number,number,number,number];
   const earlier=(a:Priority,b:Priority)=>compareStaffingPriority(a,b)<0;
-  let lastPriority:Priority=[0,0,0,0];
+  let lastPriority:Priority=[0,0,0,0,0,0];
   let strictPriority=false;
   const costOfDay = (d: number): number => {
     const info = days[d];
     const n = info.need.length;
     for (const c of counts) c.fill(0, 0, n);
     let cost = 0;
-    const priority:Priority=[0,0,0,0];
+    const priority:Priority=[0,0,0,0,0,0];
+    let paidSum = 0;
     for (let e = 0; e < E; e++) {
       const cell = grid[e][d];
       if (!cell) continue;
+      paidSum += cell.paid;
       if (cell.paid > 360) cost += W_LONG;
       if (cell.paid < 240) cost += W_SHORT;
       const end = cell.start + cell.paid + (cell.split ? cell.split.to-cell.split.from : calculatePause(cell.paid));
@@ -154,8 +165,12 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
       const peak = minute >= RESTAURANT_POLICY.peak.startMinutes && minute < RESTAURANT_POLICY.peak.endMinutes;
       if(hasRoles && !peak)cost += W_ROLE_OVER * (Math.max(0,k-1)**2 + Math.max(0,s-1)**2);
       const optional=isOptionalCoverageTime(minute);
-      priority[optional ? 1 : 0]+=hasRoles ? Number(k===0)+Number(s===0) : Number(total===0);
-      if(peak)priority[info.busy ? 2 : 3]+=Math.max(0,info.need[i]-total);
+      const missingRoles = hasRoles ? Number(k===0)+Number(s===0) : Number(total===0);
+      if (optional) priority[3] += missingRoles;
+      else if (missingRoles === 2) priority[0]++;
+      else priority[1] += missingRoles;
+      if (!optional && hasRoles && k === 0 && s === 0) cost += W_BOTH;
+      if(peak)priority[info.busy ? 4 : 5]+=Math.max(0,info.need[i]-total);
       const roleCost=optional ? W_ROLE/100 : W_ROLE;
       if (hasRoles) {
         if (k === 0) cost += roleCost + (i === 0 || counts[0][i - 1] > 0 ? W_GAP_PIECE : 0);
@@ -166,8 +181,11 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
       if (total < need) cost += (peak ? (info.busy ? W_BUSY_PEAK : W_NORMAL_PEAK) : W_STAFF) * (need - total);
       else if (total > need) cost += W_OVER * (total - need) ** 2;
     }
+    const deviation = (paidSum - info.target) / 60;
+    cost += W_BALANCE * deviation ** 2;
+    priority[2] = Math.min(9999, Math.round(deviation ** 2 * 4));
     lastPriority=priority;
-    return strictPriority ? priority[0]*1e12+priority[1]*1e9+priority[2]*1e6+priority[3]*1000+cost/1e6 : cost;
+    return strictPriority ? priority[0]*1e14+priority[1]*1e11+priority[2]*1e7+priority[3]*1e4+priority[4]*1e2+priority[5]+cost/1e7 : cost;
   };
 
   /** Đặt ca và chọn giờ nghỉ tốt nhất cho ngày đó; trả về chi phí ngày mới. */
@@ -291,7 +309,7 @@ export function optimizeMonth(input: OptimizerInput): Shift[] {
   const T1 = 2;
   let total = dayCost.reduce((a, b) => a + b, 0);
   const priorities:Priority[]=days.map((_,d)=>{costOfDay(d);return [...lastPriority];});
-  const sumPriority=()=>priorities.reduce<Priority>((n,p)=>[n[0]+p[0],n[1]+p[1],n[2]+p[2],n[3]+p[3]],[0,0,0,0]);
+  const sumPriority=()=>priorities.reduce<Priority>((n,p)=>n.map((v,i)=>v+p[i]) as Priority,[0,0,0,0,0,0]);
   let bestPriority=sumPriority();
   let bestTotal = total;
   let bestGrid = grid.map((row) => row.map((c) => (c ? { ...c } : null)));

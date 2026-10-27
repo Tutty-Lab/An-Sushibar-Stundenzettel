@@ -1,3 +1,4 @@
+import { workingAt } from "../staffing";
 import { coverageSummary } from "../coverage";
 import { describe, it, expect } from "vitest";
 import { STORES, initialScheduleFor } from "../stores";
@@ -48,7 +49,12 @@ describe("An Sushibar historical holiday-closed contract completion", () => {
   console.log(JSON.stringify({month,totalHours:shifts.reduce((n,s)=>n+s.paidMinutes,0)/60,kitchenGapMinutes:kitchen,serviceGapMinutes:service,peakMissingStaffMinutes:peak}));
   if(month===10) {
    // Before: 1,110 kitchen + 1,440 service minutes missing with the 20h roster.
-   expect(kitchen+service).toBeLessThanOrEqual(1620);
+   // Chủ đứng bù một vị trí: không bao giờ thiếu CẢ bếp lẫn bồi ngoài 14:00–16:00.
+   for(const date of open) for(let m=630;m<1260;m+=30) {
+    if(m>=840 && m<960) continue;
+    const active=shifts.filter(s=>s.date===date && workingAt(s,m)).map(s=>employees.find(e=>e.id===s.employeeId)?.workRole);
+    expect(active.includes("KITCHEN") || active.includes("SERVICE_SUSHI")).toBe(true);
+   }
    expect(service).toBeLessThanOrEqual(570);
    const paidOn = (day: string) => shifts.filter(s=>s.date===`2026-10-${day}`).reduce((n,s)=>n+s.paidMinutes,0);
    const fridays = ["02","09","16","23","30"].map(paidOn);
