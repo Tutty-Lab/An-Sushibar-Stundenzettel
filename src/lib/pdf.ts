@@ -280,8 +280,8 @@ function drawStundenzettelTable(
   rows: DayRow[],
   totalMinutes: number,
 ): void {
-  const FS = 6.5; // Schriftgröße (pt)
-  const LH = 2.5; // Höhe je Textzeile (mm)
+  const FS = 8; // Schriftgröße (pt)
+  const LH = 2.9; // Höhe je Textzeile (mm)
   const PADV = 0.7; // Innenabstand oben/unten (mm)
   const headH = LH + 2 * PADV;
   const footH = LH + 2 * PADV;
@@ -347,7 +347,8 @@ function drawStundenzettelTable(
       lines.forEach((ln, j) => {
         const yBase = y + PADV + (offset + j) * LH + LH * 0.72;
         if (ci === 0 && j === 0) drawCellText(ln, ci, yBase, "bold", INK);
-        else if (ci === 0 || ci === 5) drawCellText(ln, ci, yBase, "normal", MUTED);
+        else if (ci === 5) drawCellText(ln, ci, yBase, "bold", INK);
+        else if (ci === 0) drawCellText(ln, ci, yBase, "normal", INK);
         else drawCellText(ln, ci, yBase, "normal", INK);
       });
     });

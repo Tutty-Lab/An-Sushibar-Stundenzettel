@@ -74,7 +74,7 @@ export function StundenzettelPage({
         <Info label="Jahr" value={String(schedule.year)} />
       </div>
 
-      <table className="stundenzettel-table w-full text-[11px]">
+      <table className="stundenzettel-table w-full text-[12px] [&_td:last-child]:text-black [&_td:last-child]:font-semibold">
         <thead>
           <tr className="bg-slate-100">
             <Th>Datum / Wochentag</Th>
